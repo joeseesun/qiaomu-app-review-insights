@@ -52,6 +52,27 @@ interface AppStoreWebReview {
 export class AppStoreFetcher {
   private static readonly BASE_URL = 'https://itunes.apple.com';
   private static readonly APP_STORE_WEB_URL = 'https://apps.apple.com';
+  private static readonly HTML_FALLBACK_COUNTRIES = [
+    'cn',
+    'us',
+    'hk',
+    'tw',
+    'sg',
+    'jp',
+    'gb',
+    'ca',
+    'au',
+    'de',
+    'my',
+    'th',
+    'kr',
+    'in',
+    'br',
+    'ie',
+    'it',
+    'nl',
+    'ch',
+  ];
   private static readonly MAX_RETRIES = 3;
   private static readonly RETRY_DELAY = 1000; // 1 second
 
@@ -125,10 +146,10 @@ export class AppStoreFetcher {
 
       console.log(`Fetch completed. Total reviews: ${allReviews.length}`);
 
-      if (allReviews.length === 0) {
-        const htmlReviews = await this.fetchHtmlReviews(appId, country, maxReviews);
+      if (!incremental && allReviews.length < maxReviews) {
+        const htmlReviews = await this.fetchHtmlReviews(appId, country, maxReviews - allReviews.length);
         if (htmlReviews.length > 0) {
-          console.log(`Using App Store HTML fallback. Total reviews: ${htmlReviews.length}`);
+          console.log(`Using App Store HTML supplemental reviews. Total supplemental reviews: ${htmlReviews.length}`);
           allReviews.push(...htmlReviews);
         }
       }
@@ -202,20 +223,49 @@ export class AppStoreFetcher {
    * Apple RSS 对部分 App 会按出口 IP/UA 返回空 feed；App Store 页面首屏仍包含评论数据。
    */
   private static async fetchHtmlReviews(appId: string, country: string, maxReviews: number): Promise<AppStoreReview[]> {
-    const url = `${this.APP_STORE_WEB_URL}/${country}/app/id${appId}`;
+    const countries = this.buildHtmlFallbackCountries(country);
+    const allReviews: AppStoreReview[] = [];
+    const seen = new Set<string>();
 
-    try {
-      console.log(`Trying App Store HTML fallback: ${url}`);
-      const html = await this.fetchTextWithRetry(url, {
-        Accept: 'text/html,application/xhtml+xml',
-      });
-      const reviews = this.parseHtmlReviews(html, appId, country);
-      console.log(`Parsed ${reviews.length} reviews from App Store HTML fallback`);
-      return reviews.slice(0, maxReviews);
-    } catch (error) {
-      console.warn(`App Store HTML fallback failed for app ${appId}:`, error);
-      return [];
+    for (const fallbackCountry of countries) {
+      const url = `${this.APP_STORE_WEB_URL}/${fallbackCountry}/app/id${appId}`;
+
+      try {
+        console.log(`Trying App Store HTML fallback: ${url}`);
+        const html = await this.fetchTextWithRetry(url, {
+          Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        }, 1, 12000);
+        const reviews = this.parseHtmlReviews(html, appId, fallbackCountry);
+        let added = 0;
+
+        for (const review of reviews) {
+          if (seen.has(review.id)) continue;
+          seen.add(review.id);
+          allReviews.push(review);
+          added++;
+        }
+
+        console.log(`Parsed ${reviews.length} HTML reviews from ${fallbackCountry}; added ${added}; total ${allReviews.length}`);
+
+        if (allReviews.length >= maxReviews) {
+          break;
+        }
+      } catch (error) {
+        console.warn(`App Store HTML fallback failed for app ${appId} in ${fallbackCountry}:`, error);
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 150));
     }
+
+    return allReviews.slice(0, maxReviews);
+  }
+
+  private static buildHtmlFallbackCountries(country: string): string[] {
+    const normalizedCountry = country.toLowerCase();
+    return [
+      normalizedCountry,
+      ...this.HTML_FALLBACK_COUNTRIES.filter((fallbackCountry) => fallbackCountry !== normalizedCountry),
+    ];
   }
 
   private static parseHtmlReviews(html: string, appId: string, country: string): AppStoreReview[] {
@@ -357,11 +407,16 @@ export class AppStoreFetcher {
     throw new Error('All fetch attempts failed');
   }
 
-  private static async fetchTextWithRetry(url: string, headers: HeadersInit, retries = this.MAX_RETRIES): Promise<string> {
+  private static async fetchTextWithRetry(
+    url: string,
+    headers: HeadersInit,
+    retries = this.MAX_RETRIES,
+    timeoutMs = 15000
+  ): Promise<string> {
     for (let i = 0; i < retries; i++) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
         const response = await fetch(url, {
           headers,
