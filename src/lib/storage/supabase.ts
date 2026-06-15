@@ -351,7 +351,7 @@ export class SupabaseStorage extends BaseStorage {
       const defaultTemplate: PromptTemplate = {
         id: 'default',
         name: '默认分析模板',
-        description: '严格JSON输出，短语化、去噪、可聚合',
+        description: '严格 JSON 输出，短语化、去噪、可聚合',
         content: `你是一名资深产品分析师。请阅读一条应用商店评论，只输出严格 JSON，不输出任何其他文字或代码块标记，且所有短语与内容一律使用中文。
 
 输入：

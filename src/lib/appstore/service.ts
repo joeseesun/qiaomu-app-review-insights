@@ -204,7 +204,7 @@ export class AppStoreService {
     const errors: string[] = [];
 
     if (!app.id || !/^\d+$/.test(app.id)) {
-      errors.push('应用ID必须是数字');
+      errors.push('应用 ID 必须是数字');
     }
 
     if (!app.name || app.name.trim().length === 0) {
@@ -220,7 +220,7 @@ export class AppStoreService {
       const existingApps = await this.storage.getApps();
       const duplicate = existingApps.find(existingApp => existingApp.id === app.id);
       if (duplicate) {
-        errors.push('该应用ID已存在');
+        errors.push('该应用 ID 已存在');
       }
     }
 

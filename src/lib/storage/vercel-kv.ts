@@ -79,11 +79,11 @@ export class VercelKVStorage extends BaseStorage {
 
 分析要求：
 1. 判断情感倾向：positive（正面）、negative（负面）、neutral（中性）
-2. 识别主要问题：提取用户反馈的具体问题和bug
+2. 识别主要问题：提取用户反馈的具体问题和 bug
 3. 提取改进建议：用户提出的功能建议和改进意见
 4. 版本相关信息：如果评论提到特定版本的问题
 
-请以JSON格式返回结果：
+请以 JSON 格式返回结果：
 {
   "sentiment": "positive|negative|neutral",
   "issues": ["问题1", "问题2"],

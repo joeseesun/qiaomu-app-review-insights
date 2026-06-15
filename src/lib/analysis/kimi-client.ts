@@ -167,7 +167,7 @@ export class KimiClient {
       const batchResults = await Promise.all(batchPromises);
       results.push(...batchResults);
 
-      // 添加延迟避免API限流
+      // 添加延迟避免 API 限流
       if (i + batchSize < requests.length) {
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
@@ -213,7 +213,7 @@ export class KimiClient {
     } = {}
   ): Promise<AnalysisResponse[]> {
     const {
-      maxTokensPerBatch = 8000, // 增加到8000 tokens，充分利用Kimi的上下文
+      maxTokensPerBatch = 8000, // 增加到 8000 tokens，充分利用 Kimi 的上下文
       maxConcurrentBatches = 3,  // 并发处理3个批次
       progressCallback
     } = options;
@@ -262,7 +262,7 @@ export class KimiClient {
         }
       }
 
-      // 批次组之间添加延迟，避免API限流
+      // 批次组之间添加延迟，避免 API 限流
       if (i + maxConcurrentBatches < batches.length) {
         console.log('Waiting between batch groups...');
         await new Promise(resolve => setTimeout(resolve, 2000));
@@ -300,7 +300,7 @@ export class KimiClient {
         currentBatch = [];
         currentTokens = 0;
 
-        // 添加延迟避免API限流
+        // 添加延迟避免 API 限流
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
 
@@ -333,7 +333,7 @@ export class KimiClient {
     for (const request of requests) {
       const requestTokens = this.estimateTokens(request, promptTemplate.content);
 
-      // 如果添加当前请求会超过token限制，且当前批次不为空，则开始新批次
+      // 如果添加当前请求会超过 token 限制，且当前批次不为空，则开始新批次
       if (currentTokens + requestTokens > maxTokensPerBatch && currentBatch.length > 0) {
         batches.push([...currentBatch]);
         currentBatch = [];
@@ -382,7 +382,7 @@ export class KimiClient {
    */
   private parseAnalysisResponse(responseContent: string): AnalysisResponse {
     try {
-      // 尝试直接解析JSON
+      // 尝试直接解析 JSON
       return this.analysisResponseFromRecord(this.asRecord(JSON.parse(responseContent)));
     } catch {
       // 回退：尝试从代码块/花括号中恢复 JSON
@@ -633,7 +633,7 @@ App：${request.appName}
   }
 
   /**
-   * 测试API连接
+   * 测试 API 连接
    */
   async testConnection(): Promise<boolean> {
     try {
@@ -657,7 +657,7 @@ App：${request.appName}
   }
 
   /**
-   * 获取API使用统计
+   * 获取 API 使用统计
    */
   async getUsageStats(): Promise<{
     model: string;
@@ -682,11 +682,11 @@ App：${request.appName}
     limit: number = 5
   ): Promise<ThemeItem[]> {
     const prompt = `你是一名资深产品分析师。请阅读一批用户评论（标题+内容），只输出严格 JSON，不要输出任何其他文字或代码块。\n` +
-    `任务：提取${polarity === 'positive' ? '好评核心亮点' : '差评核心问题'}主题，给出中文短标题（≤16字）与2-3句中文解读，并提供来自原文的一条证据句（含评论id）。\n` +
+    `任务：提取${polarity === 'positive' ? '好评核心亮点' : '差评核心问题'}主题，给出中文短标题（≤16 字）与 2-3 句中文解读，并提供来自原文的一条证据句（含评论 id）。\n` +
     `严格要求：\n- 所有输出中文；\n- 不要使用“建议/问题/优化/改进”等口水词做标题；\n- 标题必须具备可理解的产品含义；\n- 证据句必须取自提供的原文内容或标题；\n- 最多返回${limit}个主题。\n\n` +
     `输入示例（多条）：[{"id":"r1","title":"...","content":"..."}, ...]\n` +
     `现在的输入：${JSON.stringify(items).slice(0, 12000)}\n\n` +
-    `输出JSON：{ "themes": [ { "title":"中文短标题", "summary":"2-3句中文解读", "examples":[{"id":"评论id","snippet":"证据句"}] } ] }`;
+    `输出 JSON：{ "themes": [ { "title":"中文短标题", "summary":"2-3 句中文解读", "examples":[{"id":"评论 id","snippet":"证据句"}] } ] }`;
 
     const completion = await this.client.chat.completions.create({
       model: this.model,
@@ -724,11 +724,11 @@ App：${request.appName}
     limit: number = 10
   ): Promise<{ issues: IssueItem[]; suggestions: SuggestionItem[] }> {
     const prompt = `你是一名资深产品分析师。请阅读一批用户评论（标题+内容），只返回严格 JSON。\n` +
-    `任务：\n- 提取“问题分类分析”：用中文短标题（≤16字）+ 1-2句中文解读，按类别归属（性能/功能/体验/内容/账户/价格/其他），并提供来自原文的一条证据句（含评论id）。\n` +
+    `任务：\n- 提取“问题分类分析”：用中文短标题（≤16 字）+ 1-2 句中文解读，按类别归属（性能/功能/体验/内容/账户/价格/其他），并提供来自原文的一条证据句（含评论 id）。\n` +
     `- 提取“改进建议”：仅当评论明确提出“希望/需要/增加/修复”等，给出中文短标题（≤16字）+ 1-2句中文解读，并提供证据句。\n` +
     `约束：\n- 所有输出中文；\n- 不要使用“建议/问题/优化/改进”等口水词做标题；\n- 标题必须可行动且具体；\n- 每项提供 1 条证据句，来自输入原文；\n- issues 与 suggestions 各最多返回 ${limit} 项。\n\n` +
-    `输入JSON（多条）：${JSON.stringify(items).slice(0, 12000)}\n\n` +
-    `输出JSON：{ "issues": [ {"title":"","summary":"","category":"性能|功能|体验|内容|账户|价格|其他","examples":[{"id":"","snippet":""}] } ], "suggestions": [ {"title":"","summary":"","examples":[{"id":"","snippet":""}] } ] }`;
+    `输入 JSON（多条）：${JSON.stringify(items).slice(0, 12000)}\n\n` +
+    `输出 JSON：{ "issues": [ {"title":"","summary":"","category":"性能|功能|体验|内容|账户|价格|其他","examples":[{"id":"","snippet":""}] } ], "suggestions": [ {"title":"","summary":"","examples":[{"id":"","snippet":""}] } ] }`;
 
     const completion = await this.client.chat.completions.create({
       model: this.model,

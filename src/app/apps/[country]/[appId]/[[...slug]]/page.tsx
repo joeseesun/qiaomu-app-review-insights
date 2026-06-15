@@ -90,13 +90,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const canonicalPath = buildAppPagePath(cached.app);
 
   return {
-    title: `${cached.app.name}评价分析 - App Store用户评论洞察`,
+    title: `${cached.app.name} 评价分析 - App Store 用户评论洞察`,
     description: metadataDescription(cached),
     keywords: [
       cached.app.name,
-      `${cached.app.name}评价`,
-      `${cached.app.name}评论`,
-      'App Store评论分析',
+      `${cached.app.name} 评价`,
+      `${cached.app.name} 评论`,
+      'App Store 评论分析',
       '用户反馈挖掘',
       '产品机会挖掘',
       '竞品评价分析',
@@ -106,10 +106,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       canonical: buildCanonicalUrl(canonicalPath),
     },
     openGraph: {
-      title: `${cached.app.name}评价分析`,
+      title: `${cached.app.name} 评价分析`,
       description: metadataDescription(cached),
       url: buildCanonicalUrl(canonicalPath),
-      siteName: '乔木App评价洞察',
+      siteName: '乔木 App 洞察',
       images: cached.app.artworkUrl ? [{ url: cached.app.artworkUrl, alt: `${cached.app.name} icon` }] : undefined,
       type: 'article',
     },
@@ -125,7 +125,7 @@ export default async function AppInsightPage({ params }: PageProps) {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Article',
-    headline: `${page.app.name}评价分析`,
+    headline: `${page.app.name} 评价分析`,
     description: metadataDescription(page),
     datePublished: page.generatedAt,
     dateModified: page.updatedAt,
@@ -136,7 +136,7 @@ export default async function AppInsightPage({ params }: PageProps) {
     },
     publisher: {
       '@type': 'Organization',
-      name: '乔木App评价洞察',
+      name: '乔木 App 洞察',
       url: 'https://appreview.qiaomu.ai',
       logo: {
         '@type': 'ImageObject',
@@ -201,7 +201,7 @@ export default async function AppInsightPage({ params }: PageProps) {
                   ) : null}
                 </div>
                 <h1 className="mt-3 break-words text-3xl font-semibold leading-tight text-zinc-950 sm:text-4xl">
-                  {page.app.name}评价分析
+                  {page.app.name} 评价分析
                 </h1>
                 <p className="mt-2 text-sm text-zinc-500">{page.app.artistName || 'App Store'} · 更新于 {formatDate(page.updatedAt)}</p>
                 <p className="mt-4 max-w-3xl text-base leading-7 text-zinc-700">
@@ -237,7 +237,7 @@ export default async function AppInsightPage({ params }: PageProps) {
                 const width = `${Math.max(3, Math.round((count / maxBucket) * 100))}%`;
                 return (
                   <div key={rating} className="grid grid-cols-[28px_minmax(0,1fr)_42px] items-center gap-2 text-xs text-zinc-500">
-                    <span>{rating}星</span>
+                    <span>{rating} 星</span>
                     <div className="h-2 overflow-hidden rounded-full bg-zinc-100">
                       <div className="h-full rounded-full bg-amber-400" style={{ width }} />
                     </div>

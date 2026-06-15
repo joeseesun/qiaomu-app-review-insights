@@ -62,7 +62,7 @@ export class AnalysisService {
       throw new Error(`No reviews found for app ${appId}`);
     }
 
-    // 获取已分析的评论ID（清理后的）
+    // 获取已分析的评论 ID（清理后的）
     const existingAnalysis = await this.storage.getAnalysisResults(appId);
     const analyzedReviewIds = new Set(existingAnalysis.map(a => a.reviewId));
 
@@ -272,7 +272,7 @@ export class AnalysisService {
         
         console.log(`Analyzed ${analysisResults.length} reviews for ${app.name}`);
         
-        // 添加延迟避免API限流
+        // 添加延迟避免 API 限流
         await new Promise(resolve => setTimeout(resolve, 2000));
       } catch (error) {
         console.error(`Failed to analyze reviews for ${app.name}:`, error);
@@ -366,7 +366,7 @@ export class AnalysisService {
       throw new Error(`No reviews found for app ${appId}`);
     }
 
-    // 创建评论ID到分析结果的映射
+    // 创建评论 ID 到分析结果的映射
     const analysisMap = new Map(
       analysisResults.map(analysis => [analysis.reviewId, analysis])
     );

@@ -154,7 +154,7 @@ export class AppStoreFetcher {
         }
       }
 
-      // 去重处理（基于评论ID）
+      // 去重处理（基于评论 ID）
       const uniqueReviews = this.deduplicateReviews(allReviews);
       console.log(`After deduplication: ${uniqueReviews.length} unique reviews`);
 
@@ -353,7 +353,7 @@ export class AppStoreFetcher {
   }
 
   /**
-   * 去重评论（基于评论ID）
+   * 去重评论（基于评论 ID）
    */
   private static deduplicateReviews(reviews: AppStoreReview[]): AppStoreReview[] {
     const seen = new Set<string>();
@@ -524,7 +524,7 @@ export class AppStoreFetcher {
   }
 
   /**
-   * 验证应用ID和国家代码
+   * 验证应用 ID 和国家代码
    */
   static validateConfig(config: FetchConfig): boolean {
     const { appId, country } = config;

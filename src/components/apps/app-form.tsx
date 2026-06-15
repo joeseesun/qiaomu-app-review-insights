@@ -54,9 +54,9 @@ export function AppForm({ app, onSubmit, onCancel, isLoading }: AppFormProps) {
       }
     } else {
       if (!formData.id.trim()) {
-        newErrors.id = '应用ID不能为空';
+        newErrors.id = '应用 ID 不能为空';
       } else if (!validateAppId(formData.id)) {
-        newErrors.id = '应用ID必须是数字';
+        newErrors.id = '应用 ID 必须是数字';
       }
 
       if (!formData.name.trim()) {
@@ -200,7 +200,7 @@ export function AppForm({ app, onSubmit, onCancel, isLoading }: AppFormProps) {
             <>
               <div>
                 <label htmlFor="appId" className="block text-sm font-medium mb-1">
-                  应用ID
+                  应用 ID
                 </label>
                 <Input
                   id="appId"
@@ -208,7 +208,7 @@ export function AppForm({ app, onSubmit, onCancel, isLoading }: AppFormProps) {
                   placeholder="例如: 6448311069"
                   value={formData.id}
                   onChange={(e) => handleInputChange('id', e.target.value)}
-                  disabled={isLoading || !!app} // 编辑时不允许修改ID
+                  disabled={isLoading || !!app} // 编辑时不允许修改 ID
                   className={errors.id ? 'border-red-500' : ''}
                 />
                 {errors.id && (

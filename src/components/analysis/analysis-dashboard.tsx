@@ -72,7 +72,7 @@ export function AnalysisDashboard({ app }: AnalysisDashboardProps) {
 
       if (response.ok) {
         await Promise.all([loadAnalysis(), loadProgress()]);
-        // 重新拉取AI聚合模块
+        // 重新拉取 AI 聚合模块
         await Promise.all([loadThemes(), loadTrends(), loadAiInsights()]);
       } else {
         const error = await response.json();
@@ -297,7 +297,7 @@ export function AnalysisDashboard({ app }: AnalysisDashboardProps) {
                     {analyzing ? '停止分析' : `继续分析至${COVERAGE_TARGET}%`}
                   </Button>
                 ) : null}
-                <Button variant="outline" size="sm" onClick={exportReport}>导出MD</Button>
+                <Button variant="outline" size="sm" onClick={exportReport}>导出 MD</Button>
                 <Button variant="outline" size="sm" onClick={exportCSV}>下载评论</Button>
               </>
             )}
@@ -343,7 +343,7 @@ export function AnalysisDashboard({ app }: AnalysisDashboardProps) {
             <Download className="h-4 w-4 mr-2" />下载所有评论
           </Button>
           <Button variant="outline" onClick={exportReport}>
-            <FileText className="h-4 w-4 mr-2" />下载Markdown报告
+            <FileText className="h-4 w-4 mr-2" />下载 Markdown 报告
           </Button>
         </div>
       </div>

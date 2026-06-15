@@ -83,7 +83,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         titleZh = parsed.titleZh || '';
         contentZh = parsed.contentZh || '';
       } catch (_e) {
-        // 回退：若不是合法JSON，直接当作纯文本塞进 contentZh/titleZh
+        // 回退：若不是合法 JSON，直接当作纯文本塞进 contentZh/titleZh
         contentZh = content.trim();
       }
 
