@@ -131,6 +131,8 @@ const exampleQueries = [
   'https://apps.apple.com/us/app/chatgpt/id6448311069',
 ];
 
+const CACHED_APP_PAGE_SIZE = 12;
+
 function formatDate(value?: string) {
   if (!value) return '未知';
   const date = new Date(value);
@@ -197,22 +199,35 @@ function AppIcon({ app }: { app: AppStoreLookupResult }) {
   );
 }
 
-function FeaturedApps({ apps }: { apps: FeaturedAppSummary[] }) {
+function clampPage(page: number, totalPages: number) {
+  return Math.min(Math.max(page, 1), Math.max(totalPages, 1));
+}
+
+function pageHref(page: number) {
+  return page <= 1 ? '/#cached-apps' : `/?cachePage=${page}#cached-apps`;
+}
+
+function FeaturedApps({ apps, currentPage }: { apps: FeaturedAppSummary[]; currentPage: number }) {
   if (apps.length === 0) return null;
+  const totalPages = Math.ceil(apps.length / CACHED_APP_PAGE_SIZE);
+  const page = clampPage(currentPage, totalPages);
+  const pageApps = apps.slice((page - 1) * CACHED_APP_PAGE_SIZE, page * CACHED_APP_PAGE_SIZE);
+  const pageNumbers = Array.from({ length: totalPages }, (_, index) => index + 1)
+    .filter((item) => item === 1 || item === totalPages || Math.abs(item - page) <= 1);
 
   return (
-    <section className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
+    <section id="cached-apps" className="mx-auto max-w-7xl scroll-mt-6 px-4 pt-6 sm:px-6 lg:px-8">
       <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-zinc-950">已生成的常用 App 洞察页</h2>
-          <p className="mt-1 text-sm text-zinc-500">搜索后会自动缓存成独立页面；这里优先展示最近生成和常见入口。</p>
+          <h2 className="text-lg font-semibold text-zinc-950">已生成的 App 洞察页</h2>
+          <p className="mt-1 text-sm text-zinc-500">所有搜索生成过的正式缓存都会出现在这里，按最近更新时间分页展示。</p>
         </div>
         <span className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs text-zinc-500">
-          SEO 静态入口
+          共 {apps.length} 个 · 第 {page}/{totalPages} 页
         </span>
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {apps.map((app) => (
+        {pageApps.map((app) => (
           <a
             key={`${app.country}-${app.id}`}
             href={app.pagePath}
@@ -247,11 +262,60 @@ function FeaturedApps({ apps }: { apps: FeaturedAppSummary[] }) {
           </a>
         ))}
       </div>
+      {totalPages > 1 ? (
+        <nav className="mt-4 flex flex-wrap items-center justify-center gap-2" aria-label="缓存 App 分页">
+          <a
+            href={pageHref(page - 1)}
+            className={`rounded-md border px-3 py-2 text-sm transition ${
+              page <= 1
+                ? 'pointer-events-none border-zinc-100 bg-zinc-50 text-zinc-300'
+                : 'border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:text-zinc-950'
+            }`}
+          >
+            上一页
+          </a>
+          {pageNumbers.map((item, index) => {
+            const previous = pageNumbers[index - 1];
+            return (
+              <span key={item} className="inline-flex items-center gap-2">
+                {previous && item - previous > 1 ? <span className="text-sm text-zinc-400">...</span> : null}
+                <a
+                  href={pageHref(item)}
+                  aria-current={item === page ? 'page' : undefined}
+                  className={`min-w-10 rounded-md border px-3 py-2 text-center text-sm transition ${
+                    item === page
+                      ? 'border-zinc-950 bg-zinc-950 text-white'
+                      : 'border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:text-zinc-950'
+                  }`}
+                >
+                  {item}
+                </a>
+              </span>
+            );
+          })}
+          <a
+            href={pageHref(page + 1)}
+            className={`rounded-md border px-3 py-2 text-sm transition ${
+              page >= totalPages
+                ? 'pointer-events-none border-zinc-100 bg-zinc-50 text-zinc-300'
+                : 'border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:text-zinc-950'
+            }`}
+          >
+            下一页
+          </a>
+        </nav>
+      ) : null}
     </section>
   );
 }
 
-export default function Home({ featuredApps = [] }: { featuredApps?: FeaturedAppSummary[] }) {
+export default function Home({
+  featuredApps = [],
+  initialCachePage = 1,
+}: {
+  featuredApps?: FeaturedAppSummary[];
+  initialCachePage?: number;
+}) {
   const [query, setQuery] = useState('ChatGPT');
   const [country, setCountry] = useState('cn');
   const [maxReviews, setMaxReviews] = useState(160);
@@ -606,7 +670,7 @@ export default function Home({ featuredApps = [] }: { featuredApps?: FeaturedApp
         </section>
       ) : (
         <>
-          <FeaturedApps apps={featuredApps} />
+          <FeaturedApps apps={featuredApps} currentPage={initialCachePage} />
           <section className="mx-auto grid max-w-7xl gap-4 px-4 py-6 sm:px-6 lg:grid-cols-3 lg:px-8">
             <div className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
               <TrendingDown className="h-5 w-5 text-rose-600" />

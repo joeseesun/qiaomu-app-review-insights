@@ -50,6 +50,7 @@ export interface CachedAppReviewPage {
   source: AppResolution['source'];
   stats: ReviewStats;
   reviews: AppStoreReview[];
+  allReviews?: AppStoreReview[];
   sourceBreakdown?: ReviewSourceBreakdown;
   diagnostics?: ReviewDiagnostics;
   insights: ReviewMiningResponse | null;
@@ -83,6 +84,7 @@ interface GenerateCachedReviewOptions {
   maxReviews?: number;
   analyze?: boolean;
   force?: boolean;
+  incremental?: boolean;
 }
 
 interface GenerateCachedReviewResult {
@@ -277,23 +279,53 @@ function hydrateReviewSource(review: AppStoreReview, primaryCountry: string): Ap
 function hydrateCachedReviewPage(page: CachedAppReviewPage): CachedAppReviewPage {
   const primaryCountry = page.app?.country || 'us';
   const reviews = (page.reviews || []).map((review) => hydrateReviewSource(review, primaryCountry));
+  const allReviews = page.allReviews?.map((review) => hydrateReviewSource(review, primaryCountry));
 
   if (page.sourceBreakdown) {
     return {
       ...page,
       reviews,
+      allReviews,
     };
   }
+
+  const trackedReviews = allReviews?.length ? allReviews : reviews;
 
   return {
     ...page,
     reviews,
+    allReviews,
     sourceBreakdown: buildLegacyEstimatedSourceBreakdown(
       page,
-      buildReviewSourceBreakdown(reviews, primaryCountry),
+      buildReviewSourceBreakdown(trackedReviews, primaryCountry),
       primaryCountry
     ),
   };
+}
+
+function isOfficialCacheFile(file: string) {
+  return /^[a-z]{2}-\d+\.json$/i.test(file);
+}
+
+function sortReviewsByDateDesc(reviews: AppStoreReview[]) {
+  return [...reviews].sort((a, b) => new Date(b.updated).getTime() - new Date(a.updated).getTime());
+}
+
+function mergeReviewCorpus(newReviews: AppStoreReview[], existingReviews: AppStoreReview[], maxReviews: number) {
+  const seen = new Set<string>();
+  const merged: AppStoreReview[] = [];
+
+  for (const review of [...newReviews, ...existingReviews]) {
+    if (seen.has(review.id)) continue;
+    seen.add(review.id);
+    merged.push(review);
+  }
+
+  return sortReviewsByDateDesc(merged).slice(0, maxReviews);
+}
+
+function getReviewCorpus(page: CachedAppReviewPage) {
+  return page.allReviews?.length ? page.allReviews : page.reviews;
 }
 
 function safeErrorMessage(error: unknown) {
@@ -344,7 +376,7 @@ export async function listCachedReviewPages(): Promise<CachedAppReviewPage[]> {
     const files = await fs.readdir(cacheRoot());
     const pages = await Promise.all(
       files
-        .filter((file) => file.endsWith('.json'))
+        .filter(isOfficialCacheFile)
         .map(async (file) => {
           try {
             const content = await fs.readFile(path.join(cacheRoot(), file), 'utf8');
@@ -363,14 +395,18 @@ export async function listCachedReviewPages(): Promise<CachedAppReviewPage[]> {
 }
 
 export async function getFeaturedCachedApps(limit = 18): Promise<FeaturedAppSummary[]> {
+  const apps = await getCachedAppSummaries();
+  return Number.isFinite(limit) ? apps.slice(0, limit) : apps;
+}
+
+export async function getCachedAppSummaries(): Promise<FeaturedAppSummary[]> {
   const pages = await listCachedReviewPages();
   return pages
     .sort((a, b) => {
-      const ratingDelta = (b.app.userRatingCount || 0) - (a.app.userRatingCount || 0);
-      if (ratingDelta !== 0) return ratingDelta;
-      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+      const updatedDelta = new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+      if (updatedDelta !== 0) return updatedDelta;
+      return (b.app.userRatingCount || 0) - (a.app.userRatingCount || 0);
     })
-    .slice(0, limit)
     .map((page) => ({
       id: page.app.id,
       name: page.app.name,
@@ -395,18 +431,38 @@ export async function generateCachedReviewPage(options: GenerateCachedReviewOpti
 
   const needsMoreReviews = existing ? maxReviews > existing.maxReviews : false;
   const needsAnalysis = existing ? options.analyze !== false && (!hasMeaningfulInsights(existing.insights) || Boolean(existing.aiError)) : false;
+  const wantsIncremental = Boolean(options.incremental && existing);
 
-  if (existing && !options.force && !needsMoreReviews && !needsAnalysis) {
+  if (existing && !options.force && !needsMoreReviews && !needsAnalysis && !wantsIncremental) {
     return { page: existing, cached: true };
   }
 
-  const reviews = await AppStoreFetcher.fetchReviews({
-    appId: resolution.app.id,
-    country,
-    incremental: false,
-    maxPages: pageCountForLimit(maxReviews),
-    maxReviews,
-  });
+  let reviews: AppStoreReview[];
+
+  if (existing && wantsIncremental) {
+    const newReviews = await AppStoreFetcher.fetchReviews({
+      appId: resolution.app.id,
+      country,
+      incremental: true,
+      lastFetched: existing.stats.latestReviewDate,
+      maxPages: 3,
+      maxReviews: Math.min(maxReviews, 150),
+    });
+
+    if (newReviews.length === 0 && !needsAnalysis) {
+      return { page: existing, cached: true };
+    }
+
+    reviews = mergeReviewCorpus(newReviews, getReviewCorpus(existing), maxReviews);
+  } else {
+    reviews = await AppStoreFetcher.fetchReviews({
+      appId: resolution.app.id,
+      country,
+      incremental: false,
+      maxPages: pageCountForLimit(maxReviews),
+      maxReviews,
+    });
+  }
 
   if (existing && existing.stats.totalReviews > 0 && reviews.length < existing.stats.totalReviews) {
     console.warn('Skipping cache overwrite because App Store returned fewer reviews for an existing cached page', {
@@ -434,9 +490,10 @@ export async function generateCachedReviewPage(options: GenerateCachedReviewOpti
     throw new Error(`App Store 暂时没有返回 ${resolution.app.name} 的评论正文，但该应用有 ${resolution.app.userRatingCount} 个评分。请稍后重新生成。`);
   }
 
-  const sortedReviews = sortReviewsForAnalysis(reviews);
-  const stats = summarizeReviews(reviews);
-  const sourceBreakdown = buildReviewSourceBreakdown(reviews, country);
+  const allReviews = sortReviewsByDateDesc(reviews).slice(0, maxReviews);
+  const sortedReviews = sortReviewsForAnalysis(allReviews);
+  const stats = summarizeReviews(allReviews);
+  const sourceBreakdown = buildReviewSourceBreakdown(allReviews, country);
   let insights: ReviewMiningResponse | null = null;
   let aiError: string | undefined;
   let model: CachedModelInfo | undefined;
@@ -476,6 +533,7 @@ export async function generateCachedReviewPage(options: GenerateCachedReviewOpti
     source: resolution.source,
     stats,
     reviews: sortedReviews.slice(0, Math.min(maxReviews, 80)),
+    allReviews,
     sourceBreakdown,
     diagnostics: buildReviewDiagnostics(reviews),
     insights,
