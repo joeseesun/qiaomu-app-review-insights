@@ -1,7 +1,7 @@
 # 乔木App评价洞察
 
 > 把 App Store 用户评价变成产品经理能直接使用的洞察页：痛点、机会、版本风险、证据和可分享页面。
-> Turn App Store reviews into SEO/GEO-friendly product insights with DeepSeek flash.
+> Turn App Store reviews into product research evidence: pain points, opportunities, version risks, and voice-of-customer signals.
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-appreview.qiaomu.ai-0f766e?style=for-the-badge)](https://appreview.qiaomu.ai)
 [![Agent Skill](https://img.shields.io/badge/Agent%20Skill-qiaomu--app--review-111827?style=for-the-badge)](#agent-skill)
@@ -14,7 +14,7 @@
 
 ## 为什么值得用
 
-App Store 评论里藏着真实需求、付费阻力、版本事故和竞品机会，但它们通常散在几百条高噪声评论里。乔木App评价洞察会自动抓取评论，用 DeepSeek flash 提炼结构化洞察，并生成可缓存、可分享、适合被搜索和 AI 引用理解的 App 评价页面。
+App Store 评论里藏着真实需求、付费阻力、版本事故和竞品机会，但它们通常散在几百条高噪声评论里。乔木App评价洞察会自动抓取评论，用 DeepSeek flash 提炼结构化洞察，并生成可缓存、可分享、可复盘的 App 评价洞察页面。
 
 它适合：
 
@@ -209,7 +209,7 @@ Skill 会引导 Agent 使用公开站点、API、缓存页面和 DeepSeek flash 
 
 # Qiaomu App Review Insights
 
-> Turn App Store reviews into SEO/GEO-friendly product insights with DeepSeek flash.
+> Turn App Store reviews into product research evidence: pain points, opportunities, version risks, and voice-of-customer signals.
 
 Qiaomu App Review Insights helps product managers, indie hackers, researchers, and content teams turn noisy App Store comments into structured insight pages: summaries, pain points, opportunities, positive signals, user segments, version risks, action plans, charts, and original review evidence.
 
