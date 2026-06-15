@@ -183,7 +183,7 @@ export function TopChartsSection({ countries, categories, initialApps }: TopChar
             </div>
             <h2 className="mt-2 text-xl font-semibold text-zinc-950">{title}</h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-500">
-              从 Apple 榜单选出基础 App 池，已生成的直接查看 DeepSeek 洞察，未生成的可一键生成缓存页。
+              从 Apple 榜单选出基础 App 池，已生成的直接查看洞察，未生成的可一键生成洞察页。
             </p>
           </div>
           <Button
