@@ -11,11 +11,14 @@ interface RegenerateRequest {
   country?: string;
   maxReviews?: number;
   analyze?: boolean;
+  incremental?: boolean;
 }
 
 interface RegenerateResponse {
   pageUrl: string;
   updatedAt: string;
+  cached: boolean;
+  incremental: boolean;
 }
 
 function clampReviewLimit(value: unknown): number {
@@ -41,12 +44,14 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       return NextResponse.json({ success: false, error: '缺少有效 App ID' }, { status: 400 });
     }
 
-    const { page } = await generateCachedReviewPage({
+    const incremental = body.incremental === true;
+    const { page, cached } = await generateCachedReviewPage({
       appId,
       country: normalizeCountry(body.country),
       maxReviews: clampReviewLimit(body.maxReviews),
       analyze: body.analyze !== false,
-      force: true,
+      force: !incremental,
+      incremental,
     });
 
     return NextResponse.json({
@@ -54,6 +59,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       data: {
         pageUrl: page.pagePath,
         updatedAt: page.updatedAt,
+        cached,
+        incremental,
       },
     });
   } catch (error) {

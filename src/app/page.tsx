@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import AppReviewHome from '@/components/app-review/home-client';
-import { getFeaturedCachedApps } from '@/lib/appstore/cache';
+import { getCachedAppSummaries } from '@/lib/appstore/cache';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,8 +29,22 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function Page() {
-  const featuredApps = await getFeaturedCachedApps(18);
+type PageProps = {
+  searchParams?: Promise<{
+    cachePage?: string;
+  }>;
+};
 
-  return <AppReviewHome featuredApps={featuredApps} />;
+function parseCachePage(value?: string) {
+  const parsed = Number.parseInt(String(value || '1'), 10);
+  if (!Number.isFinite(parsed)) return 1;
+  return Math.max(1, parsed);
+}
+
+export default async function Page({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const featuredApps = await getCachedAppSummaries();
+  const initialCachePage = parseCachePage(params?.cachePage);
+
+  return <AppReviewHome featuredApps={featuredApps} initialCachePage={initialCachePage} />;
 }
