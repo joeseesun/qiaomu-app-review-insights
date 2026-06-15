@@ -17,6 +17,11 @@ import {
 } from 'lucide-react';
 import { InsightGrid } from '@/components/app-review/insight-cards';
 import { SiteAffordances, SiteFooter } from '@/components/app-review/site-footer';
+import {
+  ReviewSourceBreakdown,
+  ReviewSourceBreakdownPanel,
+  reviewSourceLabel,
+} from '@/components/app-review/source-breakdown';
 import { AppStoreReview } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -74,6 +79,7 @@ interface ResearchData {
   source: 'url' | 'id' | 'search';
   stats: ReviewStats;
   reviews: AppStoreReview[];
+  sourceBreakdown?: ReviewSourceBreakdown;
   insights: ReviewMiningResponse | null;
   aiError?: string;
   pageUrl: string;
@@ -509,6 +515,8 @@ export default function Home({ featuredApps = [] }: { featuredApps?: FeaturedApp
             </div>
           </div>
 
+          <ReviewSourceBreakdownPanel breakdown={result.sourceBreakdown} className="mt-4" />
+
           <section className="mt-4 rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -582,7 +590,7 @@ export default function Home({ featuredApps = [] }: { featuredApps?: FeaturedApp
                     <div className="min-w-0">
                       <h3 className="break-words text-sm font-semibold leading-6 text-zinc-950">{review.title}</h3>
                       <p className="mt-1 text-xs text-zinc-500">
-                        {review.version || 'Unknown'} · {formatDate(review.updated)} · {review.authorName || '匿名'}
+                        {review.version || 'Unknown'} · {formatDate(review.updated)} · {review.authorName || '匿名'} · {reviewSourceLabel(review.source, review.sourceCountry || review.country)}
                       </p>
                     </div>
                     <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-200 bg-white px-2 py-1 text-xs text-amber-700">

@@ -6,6 +6,8 @@ export interface App {
   lastFetched?: string;
 }
 
+export type AppReviewSource = 'apple-rss' | 'app-store-html';
+
 // AppStore 评论原始数据类型
 export interface AppStoreReview {
   id: string;
@@ -23,6 +25,8 @@ export interface AppStoreReview {
   contentTypeLabel: string;
   appId: string;
   country: string;
+  source?: AppReviewSource;
+  sourceCountry?: string;
 }
 
 // 分析结果类型

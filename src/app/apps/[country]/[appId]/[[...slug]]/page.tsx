@@ -4,6 +4,7 @@ import { AlertCircle, Apple, ArrowLeft, ArrowUpRight, Lightbulb, Star, Target, T
 import { InsightGrid } from '@/components/app-review/insight-cards';
 import { RegenerateButton } from '@/components/app-review/regenerate-button';
 import { SiteFooter } from '@/components/app-review/site-footer';
+import { ReviewSourceBreakdownPanel, reviewSourceLabel } from '@/components/app-review/source-breakdown';
 import { VersionDiagnosticsPanel } from '@/components/app-review/version-diagnostics';
 import {
   CachedAppReviewPage,
@@ -208,7 +209,7 @@ export default async function AppInsightPage({ params }: PageProps) {
                 </h1>
                 <p className="mt-2 text-sm text-zinc-500">{page.app.artistName || 'App Store'} · 更新于 {formatDate(page.updatedAt)}</p>
                 <p className="mt-4 max-w-3xl text-base leading-7 text-zinc-700">
-                  本页基于 App Store 用户评价缓存生成，面向产品分析、竞品研究和搜索引用场景，保留评论证据并用 DeepSeek flash 提炼可行动信号。
+                  本页基于 App Store 用户评价缓存生成，面向产品分析、竞品研究和搜索引用场景，保留评论证据、来源构成和样本边界，并用 DeepSeek flash 提炼可行动信号。
                 </p>
               </div>
             </div>
@@ -273,6 +274,10 @@ export default async function AppInsightPage({ params }: PageProps) {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 pb-6 sm:px-6 lg:px-8">
+        <ReviewSourceBreakdownPanel breakdown={page.sourceBreakdown} />
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 pb-6 sm:px-6 lg:px-8">
         <div className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
           <h2 className="text-lg font-semibold text-zinc-950">摘要</h2>
           {insights ? (
@@ -322,7 +327,7 @@ export default async function AppInsightPage({ params }: PageProps) {
                     <div className="min-w-0">
                       <h3 className="break-words text-sm font-semibold leading-6 text-zinc-950">{review.title}</h3>
                       <p className="mt-1 text-xs text-zinc-500">
-                        {review.version || 'Unknown'} · {formatDate(review.updated)} · {review.authorName || '匿名'}
+                        {review.version || 'Unknown'} · {formatDate(review.updated)} · {review.authorName || '匿名'} · {reviewSourceLabel(review.source, review.sourceCountry || review.country)}
                       </p>
                     </div>
                     <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-200 bg-white px-2 py-1 text-xs text-amber-700">

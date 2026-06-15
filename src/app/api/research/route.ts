@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ReviewMiningResponse } from '@/lib/analysis/kimi-client';
-import { generateCachedReviewPage } from '@/lib/appstore/cache';
+import { ReviewSourceBreakdown, generateCachedReviewPage } from '@/lib/appstore/cache';
 import { ReviewDiagnostics } from '@/lib/appstore/diagnostics';
 import { normalizeCountry, AppStoreLookupResult } from '@/lib/appstore/discovery';
 import { ReviewStats } from '@/lib/appstore/review-summary';
@@ -23,6 +23,7 @@ interface ResearchResponse {
   source: 'url' | 'id' | 'search';
   stats: ReviewStats;
   reviews: AppStoreReview[];
+  sourceBreakdown?: ReviewSourceBreakdown;
   diagnostics?: ReviewDiagnostics;
   insights: ReviewMiningResponse | null;
   aiError?: string;
@@ -74,6 +75,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         source: page.source,
         stats: page.stats,
         reviews: page.reviews,
+        sourceBreakdown: page.sourceBreakdown,
         diagnostics: page.diagnostics,
         insights: page.insights,
         aiError: page.aiError,

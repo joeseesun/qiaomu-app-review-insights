@@ -13,11 +13,31 @@ import {
 } from '@/lib/appstore/discovery';
 import { ReviewDiagnostics, buildReviewDiagnostics } from '@/lib/appstore/diagnostics';
 import { ReviewStats, sortReviewsForAnalysis, summarizeReviews } from '@/lib/appstore/review-summary';
-import { AppStoreReview } from '@/types';
+import { AppReviewSource, AppStoreReview } from '@/types';
 
 export interface CachedModelInfo {
   provider: string;
   model: string;
+}
+
+export interface ReviewSourceCountryBreakdown {
+  country: string;
+  count: number;
+  rssCount: number;
+  htmlCount: number;
+}
+
+export interface ReviewSourceBreakdown {
+  total: number;
+  rssCount: number;
+  htmlCount: number;
+  unknownCount: number;
+  countryCount: number;
+  countries: ReviewSourceCountryBreakdown[];
+  note: string;
+  trackedReviewCount?: number;
+  statsTotal?: number;
+  estimated?: boolean;
 }
 
 export interface CachedAppReviewPage {
@@ -30,6 +50,7 @@ export interface CachedAppReviewPage {
   source: AppResolution['source'];
   stats: ReviewStats;
   reviews: AppStoreReview[];
+  sourceBreakdown?: ReviewSourceBreakdown;
   diagnostics?: ReviewDiagnostics;
   insights: ReviewMiningResponse | null;
   aiError?: string;
@@ -132,6 +153,149 @@ function pageCountForLimit(limit: number) {
   return Math.min(Math.max(Math.ceil(limit / 50), 1), 8);
 }
 
+function inferReviewSource(review: AppStoreReview): AppReviewSource | 'unknown' {
+  if (review.source === 'apple-rss' || review.source === 'app-store-html') {
+    return review.source;
+  }
+
+  if (review.contentTypeLabel === 'Review' || review.link?.includes('apps.apple.com')) {
+    return 'app-store-html';
+  }
+
+  if (review.link?.includes('itunes.apple.com') || (review.version && review.version !== 'Unknown')) {
+    return 'apple-rss';
+  }
+
+  return 'unknown';
+}
+
+export function buildReviewSourceBreakdown(reviews: AppStoreReview[], primaryCountry: string): ReviewSourceBreakdown {
+  const countryBuckets = new Map<string, ReviewSourceCountryBreakdown>();
+  let rssCount = 0;
+  let htmlCount = 0;
+  let unknownCount = 0;
+
+  for (const review of reviews) {
+    const source = inferReviewSource(review);
+    const country = normalizeCountry(review.sourceCountry || review.country || primaryCountry);
+    const bucket = countryBuckets.get(country) || {
+      country,
+      count: 0,
+      rssCount: 0,
+      htmlCount: 0,
+    };
+
+    bucket.count += 1;
+
+    if (source === 'apple-rss') {
+      rssCount += 1;
+      bucket.rssCount += 1;
+    } else if (source === 'app-store-html') {
+      htmlCount += 1;
+      bucket.htmlCount += 1;
+    } else {
+      unknownCount += 1;
+    }
+
+    countryBuckets.set(country, bucket);
+  }
+
+  return {
+    total: reviews.length,
+    rssCount,
+    htmlCount,
+    unknownCount,
+    countryCount: countryBuckets.size,
+    countries: Array.from(countryBuckets.values()).sort((a, b) => b.count - a.count),
+    note: 'RSS 提供所选国家/地区的最近评论；App Store 页面补样本来自 Apple 页面展示的精选/有帮助评论，多 storefront 去重后用于补充样本，不代表全量评论库。',
+  };
+}
+
+function buildLegacyEstimatedSourceBreakdown(
+  page: CachedAppReviewPage,
+  trackedBreakdown: ReviewSourceBreakdown,
+  primaryCountry: string
+): ReviewSourceBreakdown {
+  const statsTotal = page.reviewSampleSize || page.stats?.totalReviews || trackedBreakdown.total;
+
+  if (statsTotal <= trackedBreakdown.total) {
+    return trackedBreakdown;
+  }
+
+  const unknownVersionCount = page.stats?.versionDistribution
+    ?.find((item) => item.version === 'Unknown')?.count || 0;
+
+  if (unknownVersionCount <= trackedBreakdown.htmlCount) {
+    return {
+      ...trackedBreakdown,
+      statsTotal,
+      trackedReviewCount: trackedBreakdown.total,
+      note: `${trackedBreakdown.note} 旧缓存只保存了 ${trackedBreakdown.total} 条评论证据，来源构成按可追踪证据展示。`,
+    };
+  }
+
+  const htmlCount = unknownVersionCount;
+  const rssCount = Math.max(0, statsTotal - htmlCount);
+  const countries = [
+    rssCount > 0 ? {
+      country: normalizeCountry(primaryCountry),
+      count: rssCount,
+      rssCount,
+      htmlCount: 0,
+    } : null,
+    htmlCount > 0 ? {
+      country: 'multi',
+      count: htmlCount,
+      rssCount: 0,
+      htmlCount,
+    } : null,
+  ].filter((item): item is ReviewSourceCountryBreakdown => Boolean(item));
+
+  return {
+    total: statsTotal,
+    rssCount,
+    htmlCount,
+    unknownCount: 0,
+    countryCount: countries.length,
+    countries,
+    note: '这是旧缓存的来源估算：RSS 数量按统计样本总数减去 Unknown 版本样本推断，页面补样本按 Unknown 版本桶推断；新生成缓存会写入精确来源国家/地区。',
+    trackedReviewCount: trackedBreakdown.total,
+    statsTotal,
+    estimated: true,
+  };
+}
+
+function hydrateReviewSource(review: AppStoreReview, primaryCountry: string): AppStoreReview {
+  const source = inferReviewSource(review);
+  return {
+    ...review,
+    source: source === 'unknown' ? review.source : source,
+    sourceCountry: review.sourceCountry || review.country || primaryCountry,
+  };
+}
+
+function hydrateCachedReviewPage(page: CachedAppReviewPage): CachedAppReviewPage {
+  const primaryCountry = page.app?.country || 'us';
+  const reviews = (page.reviews || []).map((review) => hydrateReviewSource(review, primaryCountry));
+
+  if (page.sourceBreakdown) {
+    return {
+      ...page,
+      reviews,
+    };
+  }
+
+  return {
+    ...page,
+    reviews,
+    sourceBreakdown: buildLegacyEstimatedSourceBreakdown(
+      page,
+      buildReviewSourceBreakdown(reviews, primaryCountry),
+      primaryCountry
+    ),
+  };
+}
+
 function safeErrorMessage(error: unknown) {
   if (!(error instanceof Error)) return '未知错误';
   if (/api[_-]?key|authorization|secret|token/i.test(error.message)) {
@@ -168,7 +332,7 @@ async function resolveApp(options: GenerateCachedReviewOptions): Promise<AppReso
 export async function readCachedReviewPage(country: string, appId: string): Promise<CachedAppReviewPage | null> {
   try {
     const content = await fs.readFile(cacheFilePath(country, appId), 'utf8');
-    return JSON.parse(content) as CachedAppReviewPage;
+    return hydrateCachedReviewPage(JSON.parse(content) as CachedAppReviewPage);
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
     throw error;
@@ -184,7 +348,7 @@ export async function listCachedReviewPages(): Promise<CachedAppReviewPage[]> {
         .map(async (file) => {
           try {
             const content = await fs.readFile(path.join(cacheRoot(), file), 'utf8');
-            return JSON.parse(content) as CachedAppReviewPage;
+            return hydrateCachedReviewPage(JSON.parse(content) as CachedAppReviewPage);
           } catch {
             return null;
           }
@@ -255,8 +419,24 @@ export async function generateCachedReviewPage(options: GenerateCachedReviewOpti
     return { page: existing, cached: true };
   }
 
+  if (reviews.length === 0 && (resolution.app.userRatingCount || 0) > 0) {
+    if (existing && existing.stats.totalReviews > 0) {
+      console.warn('Skipping cache overwrite because App Store returned no reviews for an app with public ratings', {
+        appId: resolution.app.id,
+        country,
+        userRatingCount: resolution.app.userRatingCount,
+        existingReviews: existing.stats.totalReviews,
+        existingUpdatedAt: existing.updatedAt,
+      });
+      return { page: existing, cached: true };
+    }
+
+    throw new Error(`App Store 暂时没有返回 ${resolution.app.name} 的评论正文，但该应用有 ${resolution.app.userRatingCount} 个评分。请稍后重新生成。`);
+  }
+
   const sortedReviews = sortReviewsForAnalysis(reviews);
   const stats = summarizeReviews(reviews);
+  const sourceBreakdown = buildReviewSourceBreakdown(reviews, country);
   let insights: ReviewMiningResponse | null = null;
   let aiError: string | undefined;
   let model: CachedModelInfo | undefined;
@@ -296,6 +476,7 @@ export async function generateCachedReviewPage(options: GenerateCachedReviewOpti
     source: resolution.source,
     stats,
     reviews: sortedReviews.slice(0, Math.min(maxReviews, 80)),
+    sourceBreakdown,
     diagnostics: buildReviewDiagnostics(reviews),
     insights,
     aiError,
