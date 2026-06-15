@@ -244,6 +244,17 @@ export async function generateCachedReviewPage(options: GenerateCachedReviewOpti
     maxReviews,
   });
 
+  if (existing && existing.stats.totalReviews > 0 && reviews.length < existing.stats.totalReviews) {
+    console.warn('Skipping cache overwrite because App Store returned fewer reviews for an existing cached page', {
+      appId: resolution.app.id,
+      country,
+      existingReviews: existing.stats.totalReviews,
+      fetchedReviews: reviews.length,
+      existingUpdatedAt: existing.updatedAt,
+    });
+    return { page: existing, cached: true };
+  }
+
   const sortedReviews = sortReviewsForAnalysis(reviews);
   const stats = summarizeReviews(reviews);
   let insights: ReviewMiningResponse | null = null;
