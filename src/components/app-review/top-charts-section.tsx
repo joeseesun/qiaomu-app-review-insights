@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { ArrowUpRight, Bot, ChevronsUpDown, Loader2, RefreshCw, Trophy } from 'lucide-react';
+import { RewardSupportDialog } from '@/components/app-review/site-footer';
 import { Button } from '@/components/ui/button';
 
 type TopChartType = 'free' | 'paid';
@@ -69,8 +70,8 @@ export function TopChartsSection({ countries, categories, initialApps }: TopChar
   const [apps, setApps] = useState<TopChartApp[]>(initialApps);
   const [loading, setLoading] = useState(false);
   const [generatingId, setGeneratingId] = useState('');
-  const [batchGenerating, setBatchGenerating] = useState(false);
   const [error, setError] = useState('');
+  const [rewardOpen, setRewardOpen] = useState(false);
 
   const title = useMemo(
     () => `${optionLabel(countries, country)} · ${optionLabel(categories, category)} · ${chartLabel(chart)} Top 10`,
@@ -138,10 +139,20 @@ export function TopChartsSection({ countries, categories, initialApps }: TopChar
           negativeShare: number;
         };
         insights: unknown;
+        generation?: {
+          status: 'cached' | 'generated' | 'deduped' | 'queued';
+          message?: string;
+        };
       }>;
 
       if (!response.ok || !payload.success || !payload.data) {
+        if (response.status === 429) {
+          setRewardOpen(true);
+        }
         throw new Error(payload.error || '生成洞察失败');
+      }
+      if (payload.data.generation?.status === 'queued') {
+        setRewardOpen(true);
       }
 
       setApps((items) => items.map((item) => item.id === app.id ? {
@@ -162,16 +173,6 @@ export function TopChartsSection({ countries, categories, initialApps }: TopChar
     }
   };
 
-  const generateTop10 = async () => {
-    setBatchGenerating(true);
-    for (const app of apps) {
-      if (!app.cached) {
-        await generateInsight(app);
-      }
-    }
-    setBatchGenerating(false);
-  };
-
   return (
     <section className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
       <div className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
@@ -183,18 +184,9 @@ export function TopChartsSection({ countries, categories, initialApps }: TopChar
             </div>
             <h2 className="mt-2 text-xl font-semibold text-zinc-950">{title}</h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-500">
-              从 Apple 榜单选出基础 App 池，已生成的直接查看洞察，未生成的可一键生成洞察页。
+              从 Apple 榜单选出基础 App 池，已生成的直接查看洞察，未生成的可以单独生成洞察页。
             </p>
           </div>
-          <Button
-            type="button"
-            onClick={generateTop10}
-            disabled={batchGenerating || loading || apps.length === 0}
-            className="rounded-md bg-zinc-950 text-white hover:bg-zinc-800"
-          >
-            {batchGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-            生成本榜 Top10
-          </Button>
         </div>
 
         <div className="mt-4 grid gap-3 md:grid-cols-[150px_minmax(0,1fr)_130px_44px]">
@@ -278,7 +270,7 @@ export function TopChartsSection({ countries, categories, initialApps }: TopChar
                   <button
                     type="button"
                     onClick={() => generateInsight(app)}
-                    disabled={Boolean(generatingId) || batchGenerating}
+                    disabled={Boolean(generatingId)}
                     className="inline-flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 transition hover:border-zinc-300 hover:text-zinc-950 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {generatingId === app.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Bot className="h-3.5 w-3.5" />}
@@ -296,6 +288,7 @@ export function TopChartsSection({ countries, categories, initialApps }: TopChar
           ))}
         </div>
       </div>
+      <RewardSupportDialog open={rewardOpen} onOpenChange={setRewardOpen} />
     </section>
   );
 }

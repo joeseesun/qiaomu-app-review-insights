@@ -12,9 +12,10 @@ import {
   Search,
   Star,
   TrendingDown,
+  X,
 } from 'lucide-react';
 import { InsightGrid } from '@/components/app-review/insight-cards';
-import { SiteAffordances, SiteFooter } from '@/components/app-review/site-footer';
+import { BrandMark, RewardSupportDialog, SiteAffordances, SiteFooter } from '@/components/app-review/site-footer';
 import {
   ReviewSourceBreakdown,
   ReviewSourceBreakdownPanel,
@@ -84,6 +85,16 @@ interface ResearchData {
   pageUrl: string;
   updatedAt: string;
   cached: boolean;
+  generation?: {
+    status: 'cached' | 'generated' | 'deduped' | 'queued';
+    message?: string;
+    limit?: {
+      limit: number;
+      used: number;
+      remaining: number;
+      resetAt: string;
+    };
+  };
   model?: {
     provider: string;
     model: string;
@@ -353,6 +364,7 @@ export default function Home({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<ResearchData | null>(null);
+  const [rewardOpen, setRewardOpen] = useState(false);
 
   const maxBucket = useMemo(() => result ? maxRatingBucket(result.stats) : 1, [result]);
   const visibleInsights = result?.insights && hasMeaningfulClientInsights(result.insights) ? result.insights : null;
@@ -373,10 +385,16 @@ export default function Home({
       const payload = await response.json() as ApiResponse<ResearchData>;
 
       if (!response.ok || !payload.success || !payload.data) {
+        if (response.status === 429) {
+          setRewardOpen(true);
+        }
         throw new Error(payload.error || '检索失败');
       }
 
       setResult(payload.data);
+      if (payload.data.generation?.status === 'queued') {
+        setRewardOpen(true);
+      }
     } catch (researchError) {
       setError(researchError instanceof Error ? researchError.message : '检索失败');
     } finally {
@@ -388,13 +406,7 @@ export default function Home({
     <main className="min-h-screen bg-[#f7f7f4] text-zinc-950">
       <header className="border-b border-zinc-200 bg-white/90">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <img src="/logo.svg" alt="乔木App评价洞察 Logo" className="h-9 w-9 rounded-lg shadow-sm" />
-            <div>
-              <p className="text-sm font-semibold text-zinc-950">乔木App评价洞察</p>
-              <p className="text-xs text-zinc-500">appreview.qiaomu.ai</p>
-            </div>
-          </div>
+          <BrandMark compact />
           <div className="flex items-center gap-2">
             <SiteAffordances subtle />
           </div>
@@ -404,10 +416,7 @@ export default function Home({
       <section className="border-b border-zinc-200 bg-[#fdfdfb]">
         <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
           <div className="min-w-0">
-            <h1 className="max-w-4xl text-3xl font-semibold leading-tight text-zinc-950 sm:text-4xl">
-              乔木App评价洞察
-            </h1>
-            <p className="mt-3 max-w-3xl text-base leading-7 text-zinc-600">
+            <p className="max-w-3xl text-base leading-7 text-zinc-600">
               搜索 App Store 应用，生成用户评价洞察页，提炼痛点、机会、版本风险和关键摘要。
             </p>
             <form onSubmit={runResearch} className="mt-6 rounded-lg border border-zinc-200 bg-white p-3 shadow-sm">
@@ -418,8 +427,21 @@ export default function Home({
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
                     placeholder="App Store 链接、App ID 或应用名称"
-                    className="h-11 rounded-md border-zinc-200 bg-zinc-50 pl-9 text-base focus-visible:ring-zinc-900"
+                    className="h-11 rounded-md border-zinc-200 bg-zinc-50 pl-9 pr-10 text-base focus-visible:ring-zinc-900"
                   />
+                  {query ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setQuery('');
+                        setError('');
+                      }}
+                      aria-label="清除搜索内容"
+                      className="absolute right-3 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded-md text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-900/15"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  ) : null}
                 </div>
                 <div className="relative">
                   <select
@@ -510,6 +532,11 @@ export default function Home({
                 已{result.cached ? '找到已有' : '生成'}评价洞察页：<a href={result.pageUrl} className="font-semibold underline underline-offset-4">{result.pageUrl}</a>
                 <span className="ml-2 text-teal-700">更新于 {formatFullDate(result.updatedAt)}</span>
               </div>
+              {result.generation?.message ? (
+                <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
+                  {result.generation.message}
+                </div>
+              ) : null}
             </section>
 
             <section className="min-w-0 rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
@@ -603,7 +630,7 @@ export default function Home({
               </>
             ) : (
               <div className="rounded-lg bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-500">
-                {result.stats.totalReviews > 0 ? 'AI 洞察暂未生成或需要重新生成。' : '暂无评论样本。'}
+                {result.stats.totalReviews > 0 ? 'AI 洞察暂未生成或需要更新。' : '暂无评论样本。'}
               </div>
             )}
           </section>
@@ -676,6 +703,7 @@ export default function Home({
         </>
       )}
       <SiteFooter />
+      <RewardSupportDialog open={rewardOpen} onOpenChange={setRewardOpen} />
     </main>
   );
 }

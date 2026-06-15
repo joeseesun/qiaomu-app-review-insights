@@ -44,7 +44,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       return NextResponse.json({ success: false, error: '缺少有效 App ID' }, { status: 400 });
     }
 
-    const incremental = body.incremental === true;
+    const allowPublicFullRegenerate = process.env.APP_REVIEW_ALLOW_PUBLIC_FORCE === 'true';
+    const incremental = allowPublicFullRegenerate ? body.incremental !== false : true;
     const { page, cached } = await generateCachedReviewPage({
       appId,
       country: normalizeCountry(body.country),

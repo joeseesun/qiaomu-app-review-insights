@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { ArrowUpRight, Gift, Github, MessageCircle, QrCode, Sparkles } from 'lucide-react';
 import {
   Dialog,
@@ -18,6 +19,55 @@ const profileLinks = [
   { label: 'X', href: 'https://x.com/vista8' },
 ];
 
+function BrandName({ className = 'text-lg' }: { className?: string }) {
+  return (
+    <p
+      className={`${className} font-semibold leading-none text-zinc-950`}
+      style={{ fontFamily: '"Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong", SimSun, serif' }}
+    >
+      乔木App洞察
+    </p>
+  );
+}
+
+export function BrandMark({ compact = false }: { compact?: boolean }) {
+  return (
+    <div className="flex items-center gap-3">
+      <img src="/logo.svg" alt="乔木App洞察 Logo" className={`${compact ? 'h-9 w-9' : 'h-10 w-10'} rounded-lg shadow-sm`} />
+      <BrandName className={compact ? 'text-lg' : 'text-xl'} />
+    </div>
+  );
+}
+
+export function RewardSupportDialog({
+  open,
+  onOpenChange,
+  trigger,
+}: {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  trigger?: ReactNode;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
+      <DialogContent className="max-w-sm rounded-lg border-zinc-200 bg-white">
+        <DialogHeader>
+          <DialogTitle>支持向阳乔木继续开发</DialogTitle>
+          <DialogDescription>
+            如果这个工具帮你节省了时间，可以打赏支持更多免费 AI 工具和评论洞察额度。
+          </DialogDescription>
+        </DialogHeader>
+        <img
+          src="/qiaomu/reward.png"
+          alt="打赏二维码"
+          className="mx-auto max-h-[62vh] w-full max-w-[260px] rounded-lg border border-zinc-200 object-contain"
+        />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function SiteAffordances({ subtle = false }: { subtle?: boolean }) {
   const buttonClass = subtle
     ? 'grid h-9 w-9 place-items-center rounded-md border border-zinc-200 bg-white text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-950 focus:outline-none focus:ring-2 focus:ring-zinc-900/15'
@@ -25,24 +75,13 @@ export function SiteAffordances({ subtle = false }: { subtle?: boolean }) {
 
   return (
     <div className="flex items-center gap-2">
-      <Dialog>
-        <DialogTrigger asChild>
+      <RewardSupportDialog
+        trigger={
           <button type="button" title="打赏支持" aria-label="打赏支持" className={buttonClass}>
             <Gift className="h-4 w-4" />
           </button>
-        </DialogTrigger>
-        <DialogContent className="max-w-sm rounded-lg border-zinc-200 bg-white">
-          <DialogHeader>
-            <DialogTitle>打赏支持</DialogTitle>
-            <DialogDescription>谢谢支持向阳乔木继续打磨实用 AI 工具。</DialogDescription>
-          </DialogHeader>
-          <img
-            src="/qiaomu/reward.png"
-            alt="打赏二维码"
-            className="mx-auto max-h-[62vh] w-full max-w-[260px] rounded-lg border border-zinc-200 object-contain"
-          />
-        </DialogContent>
-      </Dialog>
+        }
+      />
 
       <Dialog>
         <DialogTrigger asChild>
@@ -91,13 +130,7 @@ export function SiteFooter() {
     <footer className="border-t border-zinc-200 bg-[#fdfdfb]">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_auto] lg:px-8">
         <div className="min-w-0">
-          <div className="flex items-center gap-3">
-            <img src="/logo.svg" alt="乔木App评价洞察 Logo" className="h-10 w-10 rounded-lg shadow-sm" />
-            <div>
-              <p className="text-sm font-semibold text-zinc-950">乔木App评价洞察</p>
-              <p className="text-xs text-zinc-500">向阳乔木的 App Store 评论洞察工具</p>
-            </div>
-          </div>
+          <BrandMark />
           <p className="mt-4 max-w-xl text-sm leading-7 text-zinc-600">
             向阳乔木把 AI 前沿变化转译成产品判断、可执行工作流、AI coding 实践和内容传播方法论。
           </p>

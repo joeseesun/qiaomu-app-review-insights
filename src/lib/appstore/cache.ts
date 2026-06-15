@@ -12,6 +12,7 @@ import {
   resolveAppQuery,
 } from '@/lib/appstore/discovery';
 import { ReviewDiagnostics, buildReviewDiagnostics } from '@/lib/appstore/diagnostics';
+import { upsertReviewHistory } from '@/lib/appstore/review-history';
 import { ReviewStats, sortReviewsForAnalysis, summarizeReviews } from '@/lib/appstore/review-summary';
 import { AppReviewSource, AppStoreReview } from '@/types';
 
@@ -85,6 +86,7 @@ interface GenerateCachedReviewOptions {
   analyze?: boolean;
   force?: boolean;
   incremental?: boolean;
+  resolution?: AppResolution;
 }
 
 interface GenerateCachedReviewResult {
@@ -364,7 +366,7 @@ async function atomicWriteJson(filePath: string, data: unknown) {
   await fs.rename(tmpPath, filePath);
 }
 
-async function resolveApp(options: GenerateCachedReviewOptions): Promise<AppResolution> {
+export async function resolveAppForCache(options: GenerateCachedReviewOptions): Promise<AppResolution> {
   const country = normalizeCountry(options.country);
 
   if (options.appId) {
@@ -450,7 +452,7 @@ export async function getCachedAppSummaries(): Promise<FeaturedAppSummary[]> {
 }
 
 export async function generateCachedReviewPage(options: GenerateCachedReviewOptions): Promise<GenerateCachedReviewResult> {
-  const resolution = await resolveApp(options);
+  const resolution = options.resolution || await resolveAppForCache(options);
   const country = normalizeCountry(resolution.app.country);
   const maxReviews = clampReviewLimit(options.maxReviews);
   const existing = await readCachedReviewPage(country, resolution.app.id);
@@ -513,7 +515,7 @@ export async function generateCachedReviewPage(options: GenerateCachedReviewOpti
       return { page: existing, cached: true };
     }
 
-    throw new Error(`App Store 暂时没有返回 ${resolution.app.name} 的评论正文，但该应用有 ${resolution.app.userRatingCount} 个评分。请稍后重新生成。`);
+    throw new Error(`App Store 暂时没有返回 ${resolution.app.name} 的评论正文，但该应用有 ${resolution.app.userRatingCount} 个评分。请稍后更新。`);
   }
 
   const allReviews = sortReviewsByDateDesc(reviews).slice(0, maxReviews);
@@ -571,6 +573,7 @@ export async function generateCachedReviewPage(options: GenerateCachedReviewOpti
     maxReviews,
   };
 
+  await upsertReviewHistory(page.app, allReviews);
   await atomicWriteJson(cacheFilePath(country, resolution.app.id), page);
   return { page, cached: false };
 }

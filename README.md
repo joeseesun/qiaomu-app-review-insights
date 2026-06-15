@@ -1,7 +1,7 @@
 # 乔木App评价洞察
 
 > App Store 评论里藏着真实需求、付费阻力和竞品机会，但它们通常散在几百条吐槽里。
-> 乔木App评价洞察把这些评论变成产品经理、独立开发者和 GEO 内容团队能直接使用的洞察页面。
+> 乔木App评价洞察把这些评论变成产品经理、独立开发者和内容团队能直接使用的洞察页面。
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-appreview.qiaomu.ai-0f766e?style=for-the-badge)](https://appreview.qiaomu.ai)
 [![Install Skill](https://img.shields.io/badge/Agent%20Skill-npx%20skills%20add-111827?style=for-the-badge)](#agent-skill)
@@ -19,9 +19,9 @@
 - 抓取 App Store 最新评论和评分分布
 - 用 DeepSeek v4 flash 提炼摘要、核心痛点、产品机会、正向信号、用户分层、版本风险和行动建议
 - 保留评论证据，避免只有空泛结论
-- 生成 SEO/GEO 友好的 App 静态洞察页
+- 生成可分享、可复盘的 App 洞察页
 - 基于版本和评论信息生成可视化图表，帮助定位需求和版本风险
-- 缓存每个 App 页面，记录更新时间，后续可重新生成
+- 缓存每个 App 页面，记录更新时间，后续可更新洞察
 - 预生成 Top Free / Top Paid 常用 App 页面，首页直接访问
 
 线上示例：
@@ -35,7 +35,7 @@
 | --- | --- |
 | 产品经理 | 从真实差评里找需求、风险和优先级 |
 | 独立开发者 | 快速研究竞品差评，找到小产品切入口 |
-| 增长 / SEO / GEO 团队 | 把 App 评价变成可被搜索引擎和生成式搜索引用的内容资产 |
+| 增长 / 内容团队 | 把 App 评价变成有证据、有结构的内容素材 |
 | 投研 / 行研 | 批量观察热门 App 的用户口碑变化 |
 | Agent 用户 | 安装 skill 后，用自然语言触发 App 评价洞察工作流 |
 
@@ -45,7 +45,7 @@
 
 | 模块 | 输出价值 |
 | --- | --- |
-| 摘要 | 一段可被 SEO/GEO 引用的产品口碑概述 |
+| 摘要 | 一段清晰的产品口碑概述 |
 | 核心痛点 | 用户反复抱怨的问题，附证据句 |
 | 产品机会 | 可以转成需求池或路线图的机会 |
 | 正向信号 | 用户愿意给高分的关键价值点 |
@@ -79,6 +79,20 @@ STORAGE_TYPE=local
 ```
 
 > 不要把 `.env.local`、`.env.development` 或任何真实 API Key 提交到仓库。
+
+公开部署时建议打开生成保护：
+
+```env
+APP_REVIEW_PUBLIC_DAILY_NEW_APP_LIMIT=5
+APP_REVIEW_PUBLIC_CACHE_FRESH_DAYS=3
+APP_REVIEW_GENERATION_LIMIT_DIR=/app/src/data/app-cache/.generation-guard
+APP_REVIEW_HISTORY_DIR=/app/src/data/app-cache/.review-history
+```
+
+- `APP_REVIEW_PUBLIC_DAILY_NEW_APP_LIMIT`: 同一 IP 每天最多生成多少个新 App 页面，默认 5。
+- `APP_REVIEW_PUBLIC_CACHE_FRESH_DAYS`: 已有页面在多少天内直接读取，不触发新生成，默认 3。
+- `APP_REVIEW_GENERATION_LIMIT_DIR`: 限流记录和待生成队列的存储目录。
+- `APP_REVIEW_HISTORY_DIR`: 历史评论仓库目录，会按 App 累积保存已经抓到过的评论样本。
 
 ## 预生成热门 App 页面
 
@@ -128,7 +142,7 @@ curl -X POST http://localhost:3000/api/research \
   -d '{"query":"ChatGPT","country":"us","maxReviews":160}'
 ```
 
-强制重新生成：
+更新洞察：
 
 ```bash
 curl -X POST http://localhost:3000/api/research/regenerate \
@@ -154,7 +168,7 @@ npx skills add joeseesun/qiaomu-app-review-skill
 
 - `分析 ChatGPT 的 App Store 用户评价，重点看版本风险和产品机会`
 - `帮我找一个同类 App 的差评痛点，看看有没有独立开发机会`
-- `把这个 App 的评论整理成 SEO/GEO 友好的洞察页结构`
+- `把这个 App 的评论整理成产品洞察页结构`
 
 Skill 会引导 Agent 使用本项目的公开站点、API、缓存和 DeepSeek flash 分析流程。
 
@@ -182,9 +196,9 @@ Skill 会引导 Agent 使用本项目的公开站点、API、缓存和 DeepSeek 
 | --- | --- |
 | `AI 服务密钥未配置或不可用` | 检查 `.env.local` 里的 `QIAOMU_LLM_API_KEY` 或 `DEEPSEEK_API_KEY` 是否存在，重启 dev server。 |
 | 搜索到的 App 不对 | 带上国家区和 App Store 链接，例如 `https://apps.apple.com/us/app/chatgpt/id6448311069`。 |
-| 详情页没有 AI 摘要 | 点击重新生成，或确认当前服务能访问 LLM API。也可以先用 `--no-analyze` 只生成评论缓存。 |
+| 详情页没有 AI 摘要 | 点击更新洞察，或确认当前服务能访问 LLM API。也可以先用 `--no-analyze` 只生成评论缓存。 |
 | Docker 启动后无缓存 | 确认 `APP_REVIEW_CACHE_DIR` 指向容器内可写路径，并挂载 volume。 |
-| 线上域名生成的 canonical 不对 | 设置 `NEXT_PUBLIC_SITE_URL=https://你的域名` 后重新生成缓存页。 |
+| 线上域名生成的页面链接不对 | 设置 `NEXT_PUBLIC_SITE_URL=https://你的域名` 后更新缓存页。 |
 
 ## 关于向阳乔木
 

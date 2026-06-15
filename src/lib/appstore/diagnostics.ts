@@ -236,7 +236,7 @@ function buildInsights(
     } : {
       label: '主导痛点',
       value: '暂无集中主题',
-      description: '当前差评主题分散，建议继续扩大样本或重新生成。',
+      description: '当前差评主题分散，建议继续扩大样本或更新洞察。',
       tone: 'zinc',
     },
     spikeDay && spikeDay.negative > 0 ? {

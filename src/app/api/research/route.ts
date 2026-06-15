@@ -1,7 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ReviewMiningResponse } from '@/lib/analysis/kimi-client';
-import { ReviewSourceBreakdown, generateCachedReviewPage } from '@/lib/appstore/cache';
+import {
+  CachedAppReviewPage,
+  ReviewSourceBreakdown,
+  generateCachedReviewPage,
+  readCachedReviewPage,
+  resolveAppForCache,
+} from '@/lib/appstore/cache';
 import { ReviewDiagnostics } from '@/lib/appstore/diagnostics';
+import {
+  GenerationLimitInfo,
+  appGenerationKey,
+  hasInFlightGeneration,
+  isFreshCachedPage,
+  publicCacheFreshDays,
+  queuePublicGeneration,
+  reservePublicGeneration,
+  runDedupedGeneration,
+} from '@/lib/appstore/generation-guard';
 import { normalizeCountry, AppStoreLookupResult } from '@/lib/appstore/discovery';
 import { ReviewStats } from '@/lib/appstore/review-summary';
 import { ApiResponse, AppStoreReview } from '@/types';
@@ -30,6 +46,11 @@ interface ResearchResponse {
   pageUrl: string;
   updatedAt: string;
   cached: boolean;
+  generation?: {
+    status: 'cached' | 'generated' | 'deduped' | 'queued';
+    message?: string;
+    limit?: GenerationLimitInfo;
+  };
   model?: {
     provider: string;
     model: string;
@@ -50,6 +71,39 @@ function safeErrorMessage(error: unknown): string {
   return error.message;
 }
 
+function shouldGeneratePage(page: CachedAppReviewPage | null, options: {
+  force: boolean;
+  freshDays: number;
+}) {
+  if (!page) return true;
+  if (options.force) return true;
+  if (isFreshCachedPage(page, options.freshDays)) return false;
+  return true;
+}
+
+function researchResponse(
+  page: CachedAppReviewPage,
+  cached: boolean,
+  generation?: ResearchResponse['generation']
+): ResearchResponse {
+  return {
+    app: page.app,
+    candidates: page.candidates,
+    source: page.source,
+    stats: page.stats,
+    reviews: page.reviews,
+    sourceBreakdown: page.sourceBreakdown,
+    diagnostics: page.diagnostics,
+    insights: page.insights,
+    aiError: page.aiError,
+    pageUrl: page.pagePath,
+    updatedAt: page.updatedAt,
+    cached,
+    generation,
+    model: page.model,
+  };
+}
+
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse<ResearchResponse>>> {
   try {
     const body = await request.json() as ResearchRequest;
@@ -57,33 +111,77 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     const country = normalizeCountry(body.country);
     const maxReviews = clampReviewLimit(body.maxReviews);
     const shouldAnalyze = body.analyze !== false;
-    const force = body.force === true;
+    const publicForceEnabled = process.env.APP_REVIEW_ALLOW_PUBLIC_FORCE === 'true';
+    const force = publicForceEnabled && body.force === true;
+    const freshDays = publicCacheFreshDays();
+    const resolution = await resolveAppForCache({ query, country });
+    const resolvedCountry = normalizeCountry(resolution.app.country);
+    const existing = await readCachedReviewPage(resolvedCountry, resolution.app.id);
 
-    const { page, cached } = await generateCachedReviewPage({
+    if (!shouldGeneratePage(existing, { force, freshDays })) {
+      return NextResponse.json({
+        success: true,
+        data: researchResponse(existing!, true, {
+          status: 'cached',
+        }),
+      });
+    }
+
+    const appKey = appGenerationKey(resolvedCountry, resolution.app.id);
+    const alreadyInFlight = hasInFlightGeneration(appKey);
+
+    if (!alreadyInFlight) {
+      const reservation = await reservePublicGeneration(request, appKey);
+
+      if (!reservation.allowed) {
+        const limit = await queuePublicGeneration(request, {
+          appKey,
+          appId: resolution.app.id,
+          appName: resolution.app.name,
+          country: resolvedCountry,
+          query,
+          reason: 'rate-limited',
+        });
+        const message = existing
+          ? '今天的新 App 生成次数已用完，已记录这个 App。你可以先查看已有洞察页，稍后再回来更新。'
+          : '今天的新 App 生成次数已用完，已记录这个 App，稍后会进入后台生成队列。';
+
+        if (existing) {
+          return NextResponse.json({
+            success: true,
+            data: researchResponse(existing, true, {
+              status: 'queued',
+              message,
+              limit,
+            }),
+          });
+        }
+
+        return NextResponse.json(
+          {
+            success: false,
+            error: message,
+          },
+          { status: 429 }
+        );
+      }
+    }
+
+    const { result, deduped } = await runDedupedGeneration(appKey, () => generateCachedReviewPage({
       query,
-      country,
+      country: resolvedCountry,
       maxReviews,
       analyze: shouldAnalyze,
-      force,
-    });
+      force: force || Boolean(existing && !isFreshCachedPage(existing, freshDays)),
+      resolution,
+    }));
+    const { page, cached } = result;
 
     return NextResponse.json({
       success: true,
-      data: {
-        app: page.app,
-        candidates: page.candidates,
-        source: page.source,
-        stats: page.stats,
-        reviews: page.reviews,
-        sourceBreakdown: page.sourceBreakdown,
-        diagnostics: page.diagnostics,
-        insights: page.insights,
-        aiError: page.aiError,
-        pageUrl: page.pagePath,
-        updatedAt: page.updatedAt,
-        cached,
-        model: page.model,
-      },
+      data: researchResponse(page, cached, {
+        status: cached ? 'cached' : deduped ? 'deduped' : 'generated',
+      }),
     });
   } catch (error) {
     console.error('Research request failed:', error);

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { AlertCircle, Apple, ArrowLeft, ArrowUpRight, Lightbulb, Star, Target, TrendingDown } from 'lucide-react';
 import { InsightGrid } from '@/components/app-review/insight-cards';
 import { RegenerateButton } from '@/components/app-review/regenerate-button';
-import { SiteFooter } from '@/components/app-review/site-footer';
+import { BrandMark, SiteFooter } from '@/components/app-review/site-footer';
 import { ReviewSourceBreakdownPanel, reviewSourceLabel } from '@/components/app-review/source-breakdown';
 import { VersionDiagnosticsPanel } from '@/components/app-review/version-diagnostics';
 import {
@@ -164,11 +164,7 @@ export default async function AppInsightPage({ params }: PageProps) {
       <header className="border-b border-zinc-200 bg-white/90">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-3">
-            <img src="/logo.svg" alt="乔木App评价洞察 Logo" className="h-9 w-9 rounded-lg shadow-sm" />
-            <div>
-              <p className="text-sm font-semibold text-zinc-950">乔木App评价洞察</p>
-              <p className="text-xs text-zinc-500">App Review Insights</p>
-            </div>
+            <BrandMark compact />
           </Link>
           <Link href="/" className="inline-flex items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-950">
             <ArrowLeft className="h-4 w-4" />
@@ -284,7 +280,7 @@ export default async function AppInsightPage({ params }: PageProps) {
           ) : (
             <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>{page.aiError || 'AI 洞察暂未生成或需要重新生成；页面仍保留评分、版本和评论证据。'}</span>
+              <span>{page.aiError || 'AI 洞察暂未生成或需要更新；页面仍保留评分、版本和评论证据。'}</span>
             </div>
           )}
         </div>
@@ -357,7 +353,7 @@ export default async function AppInsightPage({ params }: PageProps) {
           <div>
             <Target className="h-5 w-5 text-teal-600" />
             <h2 className="mt-3 text-base font-semibold text-zinc-950">数据如何更新？</h2>
-            <p className="mt-2 text-sm leading-6 text-zinc-500">页面记录更新时间，可点击重新生成，抓取最新评论并更新当前洞察页。</p>
+            <p className="mt-2 text-sm leading-6 text-zinc-500">页面记录更新时间，可点击更新洞察，抓取最新评论并更新当前页面。</p>
           </div>
         </div>
       </section>
