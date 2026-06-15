@@ -255,6 +255,21 @@ export async function generateCachedReviewPage(options: GenerateCachedReviewOpti
     return { page: existing, cached: true };
   }
 
+  if (reviews.length === 0 && (resolution.app.userRatingCount || 0) > 0) {
+    if (existing && existing.stats.totalReviews > 0) {
+      console.warn('Skipping cache overwrite because App Store returned no reviews for an app with public ratings', {
+        appId: resolution.app.id,
+        country,
+        userRatingCount: resolution.app.userRatingCount,
+        existingReviews: existing.stats.totalReviews,
+        existingUpdatedAt: existing.updatedAt,
+      });
+      return { page: existing, cached: true };
+    }
+
+    throw new Error(`App Store 暂时没有返回 ${resolution.app.name} 的评论正文，但该应用有 ${resolution.app.userRatingCount} 个评分。请稍后重新生成。`);
+  }
+
   const sortedReviews = sortReviewsForAnalysis(reviews);
   const stats = summarizeReviews(reviews);
   let insights: ReviewMiningResponse | null = null;

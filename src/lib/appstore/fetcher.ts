@@ -39,8 +39,19 @@ interface AppStoreResponse {
   };
 }
 
+interface AppStoreWebReview {
+  '$kind'?: string;
+  id?: string;
+  title?: string;
+  date?: string;
+  contents?: string;
+  rating?: number;
+  reviewerName?: string;
+}
+
 export class AppStoreFetcher {
   private static readonly BASE_URL = 'https://itunes.apple.com';
+  private static readonly APP_STORE_WEB_URL = 'https://apps.apple.com';
   private static readonly MAX_RETRIES = 3;
   private static readonly RETRY_DELAY = 1000; // 1 second
 
@@ -114,6 +125,14 @@ export class AppStoreFetcher {
 
       console.log(`Fetch completed. Total reviews: ${allReviews.length}`);
 
+      if (allReviews.length === 0) {
+        const htmlReviews = await this.fetchHtmlReviews(appId, country, maxReviews);
+        if (htmlReviews.length > 0) {
+          console.log(`Using App Store HTML fallback. Total reviews: ${htmlReviews.length}`);
+          allReviews.push(...htmlReviews);
+        }
+      }
+
       // 去重处理（基于评论ID）
       const uniqueReviews = this.deduplicateReviews(allReviews);
       console.log(`After deduplication: ${uniqueReviews.length} unique reviews`);
@@ -177,6 +196,94 @@ export class AppStoreFetcher {
       `${this.BASE_URL}/${country}/rss/customerreviews/page=${page}/id=${appId}/sortBy=mostRecent/json`,
       `${this.BASE_URL}/${country}/rss/customerreviews/page=${page}/id=${appId}/sortby=mostrecent/json`,
     ];
+  }
+
+  /**
+   * Apple RSS 对部分 App 会按出口 IP/UA 返回空 feed；App Store 页面首屏仍包含评论数据。
+   */
+  private static async fetchHtmlReviews(appId: string, country: string, maxReviews: number): Promise<AppStoreReview[]> {
+    const url = `${this.APP_STORE_WEB_URL}/${country}/app/id${appId}`;
+
+    try {
+      console.log(`Trying App Store HTML fallback: ${url}`);
+      const html = await this.fetchTextWithRetry(url, {
+        Accept: 'text/html,application/xhtml+xml',
+      });
+      const reviews = this.parseHtmlReviews(html, appId, country);
+      console.log(`Parsed ${reviews.length} reviews from App Store HTML fallback`);
+      return reviews.slice(0, maxReviews);
+    } catch (error) {
+      console.warn(`App Store HTML fallback failed for app ${appId}:`, error);
+      return [];
+    }
+  }
+
+  private static parseHtmlReviews(html: string, appId: string, country: string): AppStoreReview[] {
+    const match = html.match(/<script type="application\/json" id="serialized-server-data">([\s\S]*?)<\/script>/);
+    if (!match?.[1]) return [];
+
+    let payload: unknown;
+    try {
+      payload = JSON.parse(match[1]);
+    } catch (error) {
+      console.warn('Failed to parse App Store serialized server data:', error);
+      return [];
+    }
+
+    const reviews: AppStoreReview[] = [];
+    const seen = new Set<string>();
+    const stack: unknown[] = [payload];
+
+    while (stack.length > 0) {
+      const item = stack.pop();
+      if (!item) continue;
+
+      if (Array.isArray(item)) {
+        for (const child of item) stack.push(child);
+        continue;
+      }
+
+      if (typeof item !== 'object') continue;
+      const record = item as Record<string, unknown>;
+
+      if (record.$kind === 'Review') {
+        const review = this.parseWebReview(record as AppStoreWebReview, appId, country);
+        if (review && !seen.has(review.id)) {
+          seen.add(review.id);
+          reviews.push(review);
+        }
+      }
+
+      for (const value of Object.values(record)) {
+        if (value && (typeof value === 'object')) {
+          stack.push(value);
+        }
+      }
+    }
+
+    return reviews;
+  }
+
+  private static parseWebReview(review: AppStoreWebReview, appId: string, country: string): AppStoreReview | null {
+    if (!review.id || !review.title || !review.contents || !review.rating) return null;
+
+    return {
+      id: review.id,
+      updated: review.date || new Date().toISOString(),
+      rating: String(review.rating),
+      version: 'Unknown',
+      title: review.title,
+      content: review.contents,
+      contentType: 'text',
+      authorName: review.reviewerName || 'App Store 用户',
+      authorUri: '',
+      voteCount: '0',
+      voteSum: '0',
+      link: `${this.APP_STORE_WEB_URL}/${country}/app/id${appId}?see-all=reviews`,
+      contentTypeLabel: 'Review',
+      appId,
+      country,
+    };
   }
 
   /**
@@ -248,6 +355,38 @@ export class AppStoreFetcher {
     }
     
     throw new Error('All fetch attempts failed');
+  }
+
+  private static async fetchTextWithRetry(url: string, headers: HeadersInit, retries = this.MAX_RETRIES): Promise<string> {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const response = await fetch(url, {
+          headers,
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        return response.text();
+      } catch (error) {
+        console.warn(`Text fetch attempt ${i + 1} failed:`, error);
+
+        if (i === retries - 1) {
+          throw error;
+        }
+
+        await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY * (i + 1)));
+      }
+    }
+
+    throw new Error('All text fetch attempts failed');
   }
 
   /**
