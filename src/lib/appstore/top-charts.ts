@@ -52,11 +52,25 @@ interface AppleTopChartEntry {
       label?: string;
     };
   };
-  link?: {
-    attributes?: {
-      href?: string;
-    };
+  link?: AppleTopChartLink | AppleTopChartLink[];
+}
+
+interface AppleTopChartLink {
+  attributes?: {
+    href?: string;
+    rel?: string;
+    type?: string;
   };
+}
+
+function getEntryAppStoreUrl(entry: AppleTopChartEntry, country: string, id: string) {
+  const links = Array.isArray(entry.link) ? entry.link : entry.link ? [entry.link] : [];
+  const appStoreLink = links.find((link) => {
+    const attributes = link.attributes;
+    return attributes?.href && attributes.rel === 'alternate' && attributes.type === 'text/html';
+  }) || links.find((link) => link.attributes?.href?.includes('/app/'));
+
+  return appStoreLink?.attributes?.href || `https://apps.apple.com/${country}/app/id${id}`;
 }
 
 const CHART_FEEDS: Record<TopChartType, string> = {
@@ -135,7 +149,7 @@ function normalizeEntry(entry: AppleTopChartEntry, index: number, country: strin
     artistName: entry['im:artist']?.label || 'App Store',
     artworkUrl: entry['im:image']?.at(-1)?.label || '',
     categoryName: entry.category?.attributes?.label,
-    appStoreUrl: entry.link?.attributes?.href,
+    appStoreUrl: getEntryAppStoreUrl(entry, country, id),
     country,
     chart,
     category,
