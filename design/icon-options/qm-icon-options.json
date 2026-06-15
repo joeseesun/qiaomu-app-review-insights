@@ -1,0 +1,164 @@
+{
+  "generatedBy": "QM Icon Studio CLI",
+  "generatedAt": "2026-06-13T23:34:05.583Z",
+  "name": "乔木App评价洞察",
+  "query": "app review analytics star search",
+  "size": 1024,
+  "count": 8,
+  "options": [
+    {
+      "option": "option-01",
+      "label": "Option 01",
+      "source": "icon",
+      "icon": "star",
+      "iconProvider": "builtin",
+      "text": null,
+      "size": 1024,
+      "palette": "signal",
+      "background": [
+        "#0f766e",
+        "#f59e0b"
+      ],
+      "foreground": [
+        "#ffffff"
+      ],
+      "svg": "option-01.svg",
+      "png": null
+    },
+    {
+      "option": "option-02",
+      "label": "Option 02",
+      "source": "icon",
+      "icon": "rocket",
+      "iconProvider": "builtin",
+      "text": null,
+      "size": 1024,
+      "palette": "meadow",
+      "background": [
+        "#14532d",
+        "#a3e635"
+      ],
+      "foreground": [
+        "#f8fafc"
+      ],
+      "svg": "option-02.svg",
+      "png": null
+    },
+    {
+      "option": "option-03",
+      "label": "Option 03",
+      "source": "icon",
+      "icon": "target",
+      "iconProvider": "builtin",
+      "text": null,
+      "size": 1024,
+      "palette": "coral",
+      "background": [
+        "#be123c",
+        "#fb7185"
+      ],
+      "foreground": [
+        "#fff7ed"
+      ],
+      "svg": "option-03.svg",
+      "png": null
+    },
+    {
+      "option": "option-04",
+      "label": "Option 04",
+      "source": "icon",
+      "icon": "smile",
+      "iconProvider": "builtin",
+      "text": null,
+      "size": 1024,
+      "palette": "cobalt",
+      "background": [
+        "#2563eb",
+        "#111827"
+      ],
+      "foreground": [
+        "#f8fafc"
+      ],
+      "svg": "option-04.svg",
+      "png": null
+    },
+    {
+      "option": "option-05",
+      "label": "Option 05",
+      "source": "icon",
+      "icon": "star",
+      "iconProvider": "builtin",
+      "text": null,
+      "size": 1024,
+      "palette": "steel",
+      "background": [
+        "#f8fafc",
+        "#f8fafc"
+      ],
+      "foreground": [
+        "#111827"
+      ],
+      "svg": "option-05.svg",
+      "png": null
+    },
+    {
+      "option": "option-06",
+      "label": "Option 06",
+      "source": "icon",
+      "icon": "rocket",
+      "iconProvider": "builtin",
+      "text": null,
+      "size": 1024,
+      "palette": "glass",
+      "background": [
+        "#0891b2",
+        "#34d399"
+      ],
+      "foreground": [
+        "#ffffff",
+        "#e0f2fe"
+      ],
+      "svg": "option-06.svg",
+      "png": null
+    },
+    {
+      "option": "option-07",
+      "label": "Option 07",
+      "source": "icon",
+      "icon": "target",
+      "iconProvider": "builtin",
+      "text": null,
+      "size": 1024,
+      "palette": "midnight",
+      "background": [
+        "#111827",
+        "#0f766e"
+      ],
+      "foreground": [
+        "#fbbf24",
+        "#ffffff"
+      ],
+      "svg": "option-07.svg",
+      "png": null
+    },
+    {
+      "option": "option-08",
+      "label": "Option 08",
+      "source": "icon",
+      "icon": "smile",
+      "iconProvider": "builtin",
+      "text": null,
+      "size": 1024,
+      "palette": "ember",
+      "background": [
+        "#7c2d12",
+        "#f97316"
+      ],
+      "foreground": [
+        "#fff7ed"
+      ],
+      "svg": "option-08.svg",
+      "png": null
+    }
+  ]
+}
