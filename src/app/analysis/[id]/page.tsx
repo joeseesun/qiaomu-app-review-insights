@@ -87,7 +87,7 @@ export default function AnalysisPage() {
                 {app.name} 分析报告
               </h1>
               <p className="text-gray-600 mt-1">
-                应用ID: {app.id}
+                应用 ID: {app.id}
               </p>
             </div>
           </div>

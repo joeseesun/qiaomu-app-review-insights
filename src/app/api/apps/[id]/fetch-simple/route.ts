@@ -20,7 +20,7 @@ export async function POST(
       );
     }
 
-    // 直接使用最简单的fetch，添加更多headers
+    // 直接使用最简单的 fetch，添加更多 headers
     const url = `https://itunes.apple.com/${app.country}/rss/customerreviews/id=${id}/json`;
 
     console.log('Fetching from:', url);
@@ -34,7 +34,7 @@ export async function POST(
         'Cache-Control': 'no-cache',
         'Pragma': 'no-cache',
       },
-      // 不设置超时，让Vercel处理
+      // 不设置超时，让 Vercel 处理
     });
 
     console.log('Response status:', response.status);

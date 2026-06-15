@@ -11,14 +11,14 @@ export class ReportGenerator {
 ## 基本信息
 
 - **应用名称**: ${app.name}
-- **应用ID**: ${app.id}
+- **应用 ID**: ${app.id}
 - **国家/地区**: ${app.country.toUpperCase()}
 - **报告生成时间**: ${formatDate(analysis.generatedAt)}
 - **分析评论总数**: ${analysis.totalReviews}
 
 ## 执行摘要
 
-本报告基于 ${analysis.totalReviews} 条用户评论的深度分析，通过AI智能分析技术，从情感倾向、用户问题和改进建议等多个维度，为产品优化提供数据支持。
+本报告基于 ${analysis.totalReviews} 条用户评论的深度分析，通过 AI 智能分析技术，从情感倾向、用户问题和改进建议等多个维度，为产品优化提供数据支持。
 
 ### 关键发现
 
@@ -123,7 +123,7 @@ ${index + 1}. **实现${suggestion.suggestion}**
 ### 数据说明
 
 - 分析时间范围: 基于所有可用的用户评论数据
-- 分析方法: 基于AI自然语言处理技术的情感分析和关键词提取
+- 分析方法: 基于 AI 自然语言处理技术的情感分析和关键词提取
 - 数据来源: App Store 用户评论
 
 ### 报告生成信息

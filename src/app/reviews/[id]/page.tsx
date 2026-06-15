@@ -55,7 +55,7 @@ export default function ReviewsPage() {
     }
   };
 
-  // 下载CSV文件
+  // 下载 CSV 文件
   const downloadCSV = () => {
     if (reviews.length === 0) {
       alert('没有评论数据可以下载');
@@ -65,7 +65,7 @@ export default function ReviewsPage() {
     // CSV 头部
     const headers = ['标题', '内容', '评分', '版本', '作者', '时间'];
 
-    // 转换数据为CSV格式
+    // 转换数据为 CSV 格式
     const csvData = reviews.map(review => [
       `"${(review.title || '').replace(/"/g, '""')}"`, // 转义双引号
       `"${(review.content || '').replace(/"/g, '""')}"`,
@@ -75,14 +75,14 @@ export default function ReviewsPage() {
       review.updated || ''
     ]);
 
-    // 组合CSV内容
+    // 组合 CSV 内容
     const csvContent = [
       headers.join(','),
       ...csvData.map(row => row.join(','))
     ].join('\n');
 
     // 创建并下载文件
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' }); // 添加BOM以支持中文
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' }); // 添加 BOM 以支持中文
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
 
@@ -146,7 +146,7 @@ export default function ReviewsPage() {
                   {app.name} 评论列表
                 </h1>
                 <p className="text-gray-600 mt-1">
-                  应用ID: {app.id}
+                  应用 ID: {app.id}
                   {pagination ? ` • 第 ${pagination.page}/${pagination.totalPages} 页 • 每页 ${pagination.limit} 条 • 共 ${pagination.total} 条` : ` • 共 ${reviews.length} 条`}
                   {analysisResults.length > 0 && ` • ${analysisResults.length} 条已分析`}
                 </p>
@@ -170,7 +170,7 @@ export default function ReviewsPage() {
                 className="flex items-center gap-2"
               >
                 <Download className="h-4 w-4" />
-                下载CSV
+                下载 CSV
               </Button>
               <Button onClick={loadData} variant="outline">
                 <RefreshCw className="h-4 w-4 mr-2" />

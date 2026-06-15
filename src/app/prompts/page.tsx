@@ -58,7 +58,7 @@ export default function PromptsPage() {
   "sentiment": "positive|negative|neutral",
   "issues": ["问题1", "问题2"],
   "suggestions": ["建议1", "建议2"],
-  "version_mentioned": "版本号或null"
+  "version_mentioned": "版本号或 null"
 }`,
       version: '1.0.0',
       isActive: false,

@@ -37,7 +37,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       return NextResponse.json(
         {
           success: false,
-          error: '应用ID、名称和国家代码都是必需的',
+          error: '应用 ID、名称和国家代码都是必需的',
         },
         { status: 400 }
       );
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       return NextResponse.json(
         {
           success: false,
-          error: '应用ID必须是数字',
+          error: '应用 ID 必须是数字',
         },
         { status: 400 }
       );

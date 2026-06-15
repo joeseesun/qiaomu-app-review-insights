@@ -37,7 +37,7 @@ export function ReviewList({ reviews, analysisResults, showAnalysis = true, serv
   const itemsPerPage = 10;
   const [translations, setTranslations] = useState<Record<string, { titleZh: string; contentZh: string }>>({});
 
-  // 创建评论ID到分析结果的映射
+  // 创建评论 ID 到分析结果的映射
   const analysisMap = useMemo(() => {
     const map = new Map<string, AnalysisResult>();
     analysisResults.forEach(analysis => {
@@ -128,7 +128,7 @@ export function ReviewList({ reviews, analysisResults, showAnalysis = true, serv
     })();
   }, [paginatedReviews]);
 
-  // 从URL初始化搜索（支持 ?q=）
+  // 从 URL 初始化搜索（支持 ?q=）
   useEffect(() => {
     try {
       const q = new URLSearchParams(window.location.search).get('q');

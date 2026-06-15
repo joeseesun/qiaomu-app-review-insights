@@ -8,25 +8,25 @@ const umamiDomain = process.env.NEXT_PUBLIC_UMAMI_DOMAIN || "appreview.qiaomu.ai
 export const metadata: Metadata = {
   metadataBase: new URL("https://appreview.qiaomu.ai"),
   title: {
-    default: "乔木App评价洞察",
-    template: "%s | 乔木App评价洞察",
+    default: "乔木 App 洞察",
+    template: "%s | 乔木 App 洞察",
   },
   description: "搜索任意 iOS App，生成 App Store 用户评价洞察页，提炼痛点、机会和版本风险。",
-  applicationName: "乔木App评价洞察",
+  applicationName: "乔木 App 洞察",
   icons: {
     icon: "/logo.svg",
     apple: "/logo.svg",
   },
   openGraph: {
-    title: "乔木App评价洞察",
+    title: "乔木 App 洞察",
     description: "把 App Store 用户评价变成清晰、可复盘的产品洞察页面。",
     url: "https://appreview.qiaomu.ai/",
-    siteName: "乔木App评价洞察",
+    siteName: "乔木 App 洞察",
     type: "website",
   },
   twitter: {
     card: "summary",
-    title: "乔木App评价洞察",
+    title: "乔木 App 洞察",
     description: "挖掘 App Store 用户评价里的痛点、机会和版本风险。",
   },
 };

@@ -50,13 +50,13 @@ export class AiTrendsService {
     // 让 AI 用中文生成 3-5 条趋势要点
     const prompt = `你是资深产品分析师。下面是某应用最近三个月的月度情感统计（pos/neg/neu、人次以及比例），请用中文生成3-5条“时间趋势洞察”要点：\n` +
     `- 必须包含数字或百分比；\n- 指出上升/下降变化；\n- 简短清晰。\n` +
-    `输入JSON: ${JSON.stringify(table)}\n` +
-    `输出JSON: { "bullets": ["要点1","要点2",...] }`;
+    `输入 JSON: ${JSON.stringify(table)}\n` +
+    `输出 JSON: { "bullets": ["要点1","要点2",...] }`;
 
     const kimi = this.getKimi();
     const completion = await kimi['client'].chat.completions.create({
       model: (kimi as any).model || 'kimi-k2-0905-preview',
-      messages: [ { role: 'system', content: '只返回严格JSON' }, { role: 'user', content: prompt } ],
+      messages: [ { role: 'system', content: '只返回严格 JSON' }, { role: 'user', content: prompt } ],
       temperature: 0.2,
       max_tokens: 400,
       response_format: { type: 'json_object' } as any,

@@ -49,7 +49,7 @@ export async function POST(
 
     // 分析评论
     const analysisResults = await analysisService.analyzeAppReviews(id, {
-      batchSize: 3, // 减小批次大小避免API限流
+      batchSize: 3, // 减小批次大小避免 API 限流
       includeAnalyzed: false, // 只分析未分析的评论
     });
     

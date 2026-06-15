@@ -26,7 +26,7 @@ function BrandName({ className = 'text-lg' }: { className?: string }) {
       style={{ fontFamily: '"PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Source Han Sans SC", "Microsoft YaHei", system-ui, sans-serif' }}
     >
       <span className="text-zinc-950" style={{ fontWeight: 760 }}>乔木</span>
-      <span className="text-zinc-800" style={{ fontWeight: 620 }}>App洞察</span>
+      <span className="text-zinc-800" style={{ fontWeight: 620 }}>App 洞察</span>
     </p>
   );
 }
@@ -36,7 +36,7 @@ export function BrandMark({ compact = false }: { compact?: boolean }) {
     <div className="flex items-center gap-3">
       <img
         src="/logo.svg"
-        alt="乔木App洞察 Logo"
+        alt="乔木 App 洞察 Logo"
         className={`${compact ? 'h-9 w-9 rounded-[10px]' : 'h-10 w-10 rounded-xl'} shrink-0 ring-1 ring-zinc-950/10`}
       />
       <BrandName className={compact ? 'text-[18px]' : 'text-[20px]'} />
