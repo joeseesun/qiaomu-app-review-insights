@@ -69,7 +69,7 @@ async function getPage(country: string, appId: string) {
 }
 
 function metadataDescription(page: CachedAppReviewPage) {
-  return `基于 ${page.stats.totalReviews} 条 ${page.app.name} App Store 用户评价，提炼评分趋势、差评痛点、产品机会、版本风险和可引用摘要。更新时间：${formatDate(page.updatedAt)}。`;
+  return `基于 ${page.stats.totalReviews} 条 ${page.app.name} App Store 用户评价，提炼评分趋势、差评痛点、产品机会、版本风险和关键摘要。更新时间：${formatDate(page.updatedAt)}。`;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -80,7 +80,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!cached) {
     return {
       title: `App ${appId} 评价洞察`,
-      description: 'App Store 用户评价分析页面，生成后会缓存为可分享的 SEO 洞察页。',
+      description: 'App Store 用户评价分析页面，生成后可查看评价洞察页。',
       alternates: {
         canonical: buildCanonicalUrl(`/apps/${normalizedCountry}/${appId}`),
       },
@@ -99,7 +99,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       'App Store评论分析',
       '用户反馈挖掘',
       'DeepSeek flash',
-      'AI搜索摘要',
       '产品需求分析',
     ],
     alternates: {
@@ -168,7 +167,7 @@ export default async function AppInsightPage({ params }: PageProps) {
             <img src="/logo.svg" alt="乔木App评价洞察 Logo" className="h-9 w-9 rounded-lg shadow-sm" />
             <div>
               <p className="text-sm font-semibold text-zinc-950">乔木App评价洞察</p>
-              <p className="text-xs text-zinc-500">SEO App Review Insights</p>
+              <p className="text-xs text-zinc-500">App Review Insights</p>
             </div>
           </Link>
           <Link href="/" className="inline-flex items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-950">
@@ -209,7 +208,7 @@ export default async function AppInsightPage({ params }: PageProps) {
                 </h1>
                 <p className="mt-2 text-sm text-zinc-500">{page.app.artistName || 'App Store'} · 更新于 {formatDate(page.updatedAt)}</p>
                 <p className="mt-4 max-w-3xl text-base leading-7 text-zinc-700">
-                  本页基于 App Store 用户评价缓存生成，面向产品分析、竞品研究和搜索引用场景，保留评论证据、来源构成和样本边界，并用 DeepSeek flash 提炼可行动信号。
+                  本页基于 App Store 用户评价生成，面向产品分析和竞品研究，保留评论证据、来源构成和样本边界，并用 DeepSeek flash 提炼可行动信号。
                 </p>
               </div>
             </div>
@@ -256,7 +255,7 @@ export default async function AppInsightPage({ params }: PageProps) {
 
       <section className="mx-auto grid max-w-7xl gap-4 px-4 py-6 sm:grid-cols-2 sm:px-6 lg:grid-cols-4 lg:px-8">
         <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
-          <p className="text-sm text-zinc-500">缓存评论</p>
+          <p className="text-sm text-zinc-500">评论样本</p>
           <p className="mt-2 text-2xl font-semibold text-zinc-950">{page.stats.totalReviews}</p>
         </div>
         <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
@@ -347,18 +346,18 @@ export default async function AppInsightPage({ params }: PageProps) {
         <div className="mx-auto grid max-w-7xl gap-4 px-4 py-6 sm:px-6 lg:grid-cols-3 lg:px-8">
           <div>
             <TrendingDown className="h-5 w-5 text-rose-600" />
-            <h2 className="mt-3 text-base font-semibold text-zinc-950">这个页面如何用于 SEO？</h2>
-            <p className="mt-2 text-sm leading-6 text-zinc-500">稳定 URL、动态 TDK、结构化数据和更新时间让搜索引擎能理解每个 App 的评价主题。</p>
+            <h2 className="mt-3 text-base font-semibold text-zinc-950">这个页面适合团队怎么用？</h2>
+            <p className="mt-2 text-sm leading-6 text-zinc-500">同一个链接里保留摘要、更新时间和评论证据，方便产品、运营和研发对齐同一版结论。</p>
           </div>
           <div>
             <Lightbulb className="h-5 w-5 text-amber-600" />
-            <h2 className="mt-3 text-base font-semibold text-zinc-950">这个页面如何被 AI 搜索引用？</h2>
-            <p className="mt-2 text-sm leading-6 text-zinc-500">页面提供摘要、证据、痛点和行动项，方便生成式搜索直接引用有来源的结论。</p>
+            <h2 className="mt-3 text-base font-semibold text-zinc-950">这些结论可靠吗？</h2>
+            <p className="mt-2 text-sm leading-6 text-zinc-500">页面保留摘要、证据、痛点和行动项，每个判断都尽量回到原始评论样本。</p>
           </div>
           <div>
             <Target className="h-5 w-5 text-teal-600" />
             <h2 className="mt-3 text-base font-semibold text-zinc-950">数据如何更新？</h2>
-            <p className="mt-2 text-sm leading-6 text-zinc-500">页面记录更新时间，可点击重新生成，重新抓取评论并覆盖缓存页面。</p>
+            <p className="mt-2 text-sm leading-6 text-zinc-500">页面记录更新时间，可点击重新生成，抓取最新评论并更新当前洞察页。</p>
           </div>
         </div>
       </section>

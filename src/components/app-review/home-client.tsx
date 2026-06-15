@@ -5,10 +5,8 @@ import {
   AlertCircle,
   Apple,
   ArrowUpRight,
-  Bot,
   CheckCircle2,
   ChevronsUpDown,
-  Clock3,
   Lightbulb,
   Loader2,
   Search,
@@ -157,13 +155,6 @@ const countryOptions = [
   { value: 'tw', label: '台湾' },
 ];
 
-const exampleQueries = [
-  'ChatGPT',
-  'DeepSeek',
-  '豆包',
-  'https://apps.apple.com/us/app/chatgpt/id6448311069',
-];
-
 const CACHED_APP_PAGE_SIZE = 12;
 
 function formatDate(value?: string) {
@@ -253,7 +244,7 @@ function FeaturedApps({ apps, currentPage }: { apps: FeaturedAppSummary[]; curre
       <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-zinc-950">已生成的 App 洞察页</h2>
-          <p className="mt-1 text-sm text-zinc-500">所有搜索生成过的正式缓存都会出现在这里，按最近更新时间分页展示。</p>
+          <p className="mt-1 text-sm text-zinc-500">所有查询过的 App 都会出现在这里，按最近更新时间分页展示。</p>
         </div>
         <span className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs text-zinc-500">
           共 {apps.length} 个 · 第 {page}/{totalPages} 页
@@ -296,7 +287,7 @@ function FeaturedApps({ apps, currentPage }: { apps: FeaturedAppSummary[]; curre
         ))}
       </div>
       {totalPages > 1 ? (
-        <nav className="mt-4 flex flex-wrap items-center justify-center gap-2" aria-label="缓存 App 分页">
+        <nav className="mt-4 flex flex-wrap items-center justify-center gap-2" aria-label="App 分页">
           <a
             href={pageHref(page - 1)}
             className={`rounded-md border px-3 py-2 text-sm transition ${
@@ -358,7 +349,7 @@ export default function Home({
   const [query, setQuery] = useState('ChatGPT');
   const [country, setCountry] = useState('cn');
   const [maxReviews, setMaxReviews] = useState(160);
-  const [analyze, setAnalyze] = useState(true);
+  const analyze = true;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<ResearchData | null>(null);
@@ -411,13 +402,13 @@ export default function Home({
       </header>
 
       <section className="border-b border-zinc-200 bg-[#fdfdfb]">
-        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-7 sm:px-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:px-8">
           <div className="min-w-0">
             <h1 className="max-w-4xl text-3xl font-semibold leading-tight text-zinc-950 sm:text-4xl">
               乔木App评价洞察
             </h1>
             <p className="mt-3 max-w-3xl text-base leading-7 text-zinc-600">
-              搜索 App Store 应用，生成可缓存、可分享、SEO 友好的用户评价洞察页，用 DeepSeek flash 提炼痛点、机会、版本风险和可引用摘要。
+              搜索 App Store 应用，生成用户评价洞察页，提炼痛点、机会、版本风险和关键摘要。
             </p>
             <form onSubmit={runResearch} className="mt-6 rounded-lg border border-zinc-200 bg-white p-3 shadow-sm">
               <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_130px_118px_44px]">
@@ -461,30 +452,6 @@ export default function Home({
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
                 </Button>
               </div>
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setAnalyze((value) => !value)}
-                  className={`inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs transition ${
-                    analyze
-                      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                      : 'border-zinc-200 bg-zinc-50 text-zinc-500'
-                  }`}
-                >
-                  <Bot className="h-3.5 w-3.5" />
-                  DeepSeek flash
-                </button>
-                {exampleQueries.map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() => setQuery(item)}
-                    className="max-w-full truncate rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs text-zinc-500 transition hover:border-zinc-300 hover:text-zinc-900"
-                  >
-                    {item}
-                  </button>
-                ))}
-              </div>
             </form>
             {error ? (
               <div className="mt-3 flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
@@ -493,32 +460,6 @@ export default function Home({
               </div>
             ) : null}
           </div>
-
-          <aside className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="grid h-10 w-10 place-items-center rounded-lg bg-sky-50 text-sky-700">
-                <Clock3 className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-zinc-950">实时抓取</p>
-                <p className="text-xs text-zinc-500">Apple RSS + iTunes Search</p>
-              </div>
-            </div>
-            <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-              <div className="rounded-md bg-zinc-50 px-2 py-3">
-                <p className="text-lg font-semibold text-zinc-950">静态</p>
-                <p className="text-xs text-zinc-500">页面缓存</p>
-              </div>
-              <div className="rounded-md bg-zinc-50 px-2 py-3">
-                <p className="text-lg font-semibold text-zinc-950">400</p>
-                <p className="text-xs text-zinc-500">条评论</p>
-              </div>
-              <div className="rounded-md bg-zinc-50 px-2 py-3">
-                <p className="text-lg font-semibold text-zinc-950">摘要</p>
-                <p className="text-xs text-zinc-500">摘要结构</p>
-              </div>
-            </div>
-          </aside>
         </div>
       </section>
 
@@ -566,7 +507,7 @@ export default function Home({
                 ) : null}
               </div>
               <div className="mt-4 rounded-lg border border-teal-100 bg-teal-50 px-4 py-3 text-sm text-teal-800">
-                已{result.cached ? '读取缓存' : '生成缓存'}为 SEO 洞察页：<a href={result.pageUrl} className="font-semibold underline underline-offset-4">{result.pageUrl}</a>
+                已{result.cached ? '找到已有' : '生成'}评价洞察页：<a href={result.pageUrl} className="font-semibold underline underline-offset-4">{result.pageUrl}</a>
                 <span className="ml-2 text-teal-700">更新于 {formatFullDate(result.updatedAt)}</span>
               </div>
             </section>

@@ -99,7 +99,7 @@ export function SiteFooter() {
             </div>
           </div>
           <p className="mt-4 max-w-xl text-sm leading-7 text-zinc-600">
-            向阳乔木把 AI 前沿变化转译成产品判断、可执行工作流、AI coding 实践和 GEO/AI 营销方法论。
+            向阳乔木把 AI 前沿变化转译成产品判断、可执行工作流、AI coding 实践和内容传播方法论。
           </p>
         </div>
 
